@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="vNoCfh" name="ImpulseMeasurement" displaySplashScreen="0"
-              reportAppUsage="1" splashScreenColour="Dark" projectType="guiapp"
+              reportAppUsage="0" splashScreenColour="Dark" projectType="guiapp"
               version="0.1.0" bundleIdentifier="com.yourcompany.ImpulseMeasurement"
               includeBinaryInAppConfig="1" cppLanguageStandard="14" companyCopyright=""
               jucerVersion="5.2.0">

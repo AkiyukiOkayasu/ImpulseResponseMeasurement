@@ -32,8 +32,8 @@ public:
     void showAudioSettings();
     
 private:
-    void generateTSP(int FFTOrder);
-    void computeIR();
+    void generateTSP(const int FFTOrder);
+    void computeIR(const int FFTOrder);
     void exportWav(AudioSampleBuffer &bufferToWrite, String fileName);
     
     enum class measurementState {
@@ -49,12 +49,13 @@ private:
     TextButton btn_measurement;
     TextButton btn_tspGenerate;
     TextButton btn_playIR;
-    AudioSampleBuffer buf_upTSP;
-    AudioSampleBuffer buf_downTSP;
+    AudioSampleBuffer buf_TSP;
+    AudioSampleBuffer buf_InverseFilter;
     AudioSampleBuffer buf_recordedTSP;
-    AudioSampleBuffer buf_impulseResponse;
+    AudioSampleBuffer buf_IR;
     unsigned int recordIndex = 0;
-    dsp::Convolution convolution;
+//    dsp::ProcessorDuplicator<dsp::FIR::Filter<float>, dsp::FIR::Coefficients<float>> inverseFilter;
+//    dsp::Convolution
     ScopedPointer<ApplicationProperties> appProperties;//オーディオインターフェース,ノイズゲート設;定の記録、呼び出し用
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainContentComponent)
