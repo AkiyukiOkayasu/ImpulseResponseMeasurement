@@ -79,7 +79,7 @@
 		99503C9033E91AA4EC63DF38 = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = "include_juce_video.mm"; path = "../../JuceLibraryCode/include_juce_video.mm"; sourceTree = "SOURCE_ROOT"; };
 		99FDB40FF3227BCCDE09E29C = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = "include_juce_core.mm"; path = "../../JuceLibraryCode/include_juce_core.mm"; sourceTree = "SOURCE_ROOT"; };
 		9AFDE4123E2996484E2D1AC9 = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "Info-App.plist"; path = "Info-App.plist"; sourceTree = "SOURCE_ROOT"; };
-		A2257573BDBF6FCB68C843B1 = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ImpulseMeasurement.app; sourceTree = "BUILT_PRODUCTS_DIR"; };
+		A2257573BDBF6FCB68C843B1 = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ImpulseResponseMeasurement.app; sourceTree = "BUILT_PRODUCTS_DIR"; };
 		A290F8295CCEA2B489A47ACF = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = MainComponent.cpp; path = ../../Source/MainComponent.cpp; sourceTree = "SOURCE_ROOT"; };
 		A315FF4024231C401A35C590 = {isa = PBXFileReference; lastKnownFileType = file; name = "juce_audio_processors"; path = "/Applications/JUCE/modules/juce_audio_processors"; sourceTree = "<absolute>"; };
 		A6EE29186A772BCD91D4535C = {isa = PBXFileReference; lastKnownFileType = file; name = "juce_audio_basics"; path = "/Applications/JUCE/modules/juce_audio_basics"; sourceTree = "<absolute>"; };
@@ -96,7 +96,7 @@
 					878EC947C721C6E7F720E94B,
 					2750B6C4DA50D08AA487D853, ); name = Source; sourceTree = "<group>"; };
 		7637C34919C8D086BAD1ADA9 = {isa = PBXGroup; children = (
-					DA25B116DEC863D64E317F26, ); name = ImpulseMeasurement; sourceTree = "<group>"; };
+					DA25B116DEC863D64E317F26, ); name = ImpulseResponseMeasurement; sourceTree = "<group>"; };
 		1ABB16D06B61DC9EE8C39010 = {isa = PBXGroup; children = (
 					A6EE29186A772BCD91D4535C,
 					8DFF6FB5F50D1D0133045304,
@@ -186,7 +186,7 @@
 				INSTALL_PATH = "$(HOME)/Applications";
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MACOSX_DEPLOYMENT_TARGET_ppc = 10.4;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.ImpulseMeasurement;
+				PRODUCT_BUNDLE_IDENTIFIER = net.tkrworks.ImpulseResponseMeasurement;
 				SDKROOT_ppc = macosx10.5;
 				USE_HEADERMAP = NO; }; name = Debug; };
 		5505CF091F908D49BDADECAC = {isa = XCBuildConfiguration; buildSettings = {
@@ -219,7 +219,7 @@
 				LLVM_LTO = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				MACOSX_DEPLOYMENT_TARGET_ppc = 10.4;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.ImpulseMeasurement;
+				PRODUCT_BUNDLE_IDENTIFIER = net.tkrworks.ImpulseResponseMeasurement;
 				SDKROOT_ppc = macosx10.5;
 				USE_HEADERMAP = NO; }; name = Release; };
 		B5991A833BFC1C325F5A4BDA = {isa = XCBuildConfiguration; buildSettings = {
@@ -257,7 +257,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_NAME = "ImpulseMeasurement";
+				PRODUCT_NAME = "ImpulseResponseMeasurement";
 				WARNING_CFLAGS = -Wreorder;
 				ZERO_LINK = NO; }; name = Debug; };
 		0DF92AC0D04914F8FC053B30 = {isa = XCBuildConfiguration; buildSettings = {
@@ -293,7 +293,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				PRODUCT_NAME = "ImpulseMeasurement";
+				PRODUCT_NAME = "ImpulseResponseMeasurement";
 				WARNING_CFLAGS = -Wreorder;
 				ZERO_LINK = NO; }; name = Release; };
 		14CCB79AE4D4F0A3388490CF = {isa = PBXTargetDependency; target = A69B73AF7F12F00593D2B59B; };
@@ -341,7 +341,7 @@
 		A69B73AF7F12F00593D2B59B = {isa = PBXNativeTarget; buildConfigurationList = F4FB8CB4164466026F28C6E9; buildPhases = (
 					95A384DFD1BEA2E2D70850A7,
 					693A5F01CD45B630245CC9C0,
-					3899E64F6351B953AE78DB31, ); buildRules = ( ); dependencies = (  ); name = "ImpulseMeasurement - App"; productName = ImpulseMeasurement; productReference = A2257573BDBF6FCB68C843B1; productType = "com.apple.product-type.application"; };
+					3899E64F6351B953AE78DB31, ); buildRules = ( ); dependencies = (  ); name = "ImpulseResponseMeasurement - App"; productName = ImpulseResponseMeasurement; productReference = A2257573BDBF6FCB68C843B1; productType = "com.apple.product-type.application"; };
 		D26E4A14DFBABAF6BBCFF534 = {isa = PBXProject; buildConfigurationList = 0B944C69EF5C83F0013619AC; attributes = { LastUpgradeCheck = 0830; TargetAttributes = { A69B73AF7F12F00593D2B59B = { SystemCapabilities = {com.apple.ApplicationGroups.iOS = { enabled = 0; }; com.apple.InAppPurchase = { enabled = 0; }; com.apple.InterAppAudio = { enabled = 0; }; com.apple.Push = { enabled = 0; }; com.apple.Sandbox = { enabled = 0; }; }; }; }; }; compatibilityVersion = "Xcode 3.2"; hasScannedForEncodings = 0; mainGroup = 716B4313430FF0A4407DE4F4; projectDirPath = ""; projectRoot = ""; targets = (A69B73AF7F12F00593D2B59B); };
 	};
 	rootObject = D26E4A14DFBABAF6BBCFF534;

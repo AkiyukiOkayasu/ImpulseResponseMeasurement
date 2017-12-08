@@ -13,11 +13,11 @@
 Component* createMainContentComponent();
 
 //==============================================================================
-class AudioApplicationTemplateApplication  : public JUCEApplication
+class ImpulseResponseMeasurement  : public JUCEApplication
 {
 public:
     //==============================================================================
-    AudioApplicationTemplateApplication() {}
+    ImpulseResponseMeasurement() {}
 
     const String getApplicationName() override       { return ProjectInfo::projectName; }
     const String getApplicationVersion() override    { return ProjectInfo::versionString; }
@@ -99,4 +99,4 @@ private:
 
 //==============================================================================
 // This macro generates the main() routine that launches the app.
-START_JUCE_APPLICATION (AudioApplicationTemplateApplication)
+START_JUCE_APPLICATION (ImpulseResponseMeasurement)

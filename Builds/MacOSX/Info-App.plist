@@ -8,11 +8,11 @@
     <key>CFBundleIconFile</key>
     <string></string>
     <key>CFBundleIdentifier</key>
-    <string>com.yourcompany.ImpulseMeasurement</string>
+    <string>net.tkrworks.ImpulseResponseMeasurement</string>
     <key>CFBundleName</key>
-    <string>ImpulseMeasurement</string>
+    <string>ImpulseResponseMeasurement</string>
     <key>CFBundleDisplayName</key>
-    <string>ImpulseMeasurement</string>
+    <string>ImpulseResponseMeasurement</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>

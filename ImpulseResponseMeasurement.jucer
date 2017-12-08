@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="vNoCfh" name="ImpulseMeasurement" displaySplashScreen="0"
+<JUCERPROJECT id="vNoCfh" name="ImpulseResponseMeasurement" displaySplashScreen="0"
               reportAppUsage="0" splashScreenColour="Dark" projectType="guiapp"
-              version="0.1.0" bundleIdentifier="com.yourcompany.ImpulseMeasurement"
+              version="0.1.0" bundleIdentifier="net.tkrworks.ImpulseResponseMeasurement"
               includeBinaryInAppConfig="1" cppLanguageStandard="14" companyCopyright=""
               jucerVersion="5.2.0">
-  <MAINGROUP id="tCWCka" name="ImpulseMeasurement">
+  <MAINGROUP id="tCWCka" name="ImpulseResponseMeasurement">
     <GROUP id="{18B3160F-CB41-CEEF-313D-1DBFA020D418}" name="Source">
       <FILE id="RKQkWK" name="MainComponent.cpp" compile="1" resource="0"
             file="Source/MainComponent.cpp"/>
@@ -17,9 +17,9 @@
     <XCODE_MAC targetFolder="Builds/MacOSX">
       <CONFIGURATIONS>
         <CONFIGURATION name="Debug" enablePluginBinaryCopyStep="1" isDebug="1" optimisation="1"
-                       linkTimeOptimisation="0" targetName="ImpulseMeasurement"/>
+                       linkTimeOptimisation="0" targetName="ImpulseResponseMeasurement"/>
         <CONFIGURATION name="Release" enablePluginBinaryCopyStep="1" isDebug="0" optimisation="3"
-                       linkTimeOptimisation="1" targetName="ImpulseMeasurement"/>
+                       linkTimeOptimisation="1" targetName="ImpulseResponseMeasurement"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_video" path="../../juce"/>
