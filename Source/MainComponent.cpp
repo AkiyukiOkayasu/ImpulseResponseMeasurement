@@ -40,6 +40,7 @@ MainContentComponent::~MainContentComponent()
 //==============================================================================
 void MainContentComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
+    generateTSP(16);
 }
 
 void MainContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& bufferToFill)
@@ -59,7 +60,7 @@ void MainContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& buff
                 if (recordIndex >= buf_recordedTSP.getNumSamples())
                 {
                     measureState = measurementState::computingIR;
-                    computeIR();
+                    computeIR(16);
                     break;
                 }
                 
@@ -100,13 +101,13 @@ void MainContentComponent::buttonClicked (Button* button)
 {
     if(button == &btn_measurement)
     {
-        const int size = buf_upTSP.getNumSamples();
+        const int size = buf_TSP.getNumSamples();
         buf_recordedTSP.clear();
         buf_recordedTSP.setSize(1, size);
-        buf_impulseResponse.clear();
-        buf_impulseResponse.setSize(1, size);
+        buf_IR.clear();
+        buf_IR.setSize(1, size);
         measureState = measurementState::starting;
-        tspPlayer.play(&buf_upTSP, false, true);
+        tspPlayer.play(&buf_TSP, false, true);
     }
     else if(button == &btn_tspGenerate)
     {
@@ -114,7 +115,7 @@ void MainContentComponent::buttonClicked (Button* button)
     }
     else if(button == &btn_playIR)
     {
-        irPlayer.play(&buf_impulseResponse, false, true);
+        irPlayer.play(&buf_IR, false, true);
     }
 }
 
@@ -136,32 +137,35 @@ void MainContentComponent::menuItemSelected(int menuItemID, int topLevelMenuInde
     if (menuItemID == 1) showAudioSettings();
 }
 
-void MainContentComponent::generateTSP(const int FFTOrder)
+void MainContentComponent::generateTSP(const int order)
 {
-    dsp::FFT fft(FFTOrder);
-    const int N = pow(2, FFTOrder);
-    const int J = N / 4;
+    dsp::FFT fft(order);
+    const int N = pow(2, order);//TSP信号長
+    const int J = N / 4;//TSP実行長
     const double alpha = 2.0 * double_Pi * (double)J;
-    constexpr float amp = 60.0;
-    buf_upTSP.setSize(1, N);
-    buf_downTSP.setSize(1, N);
+    buf_TSP.clear();
+    buf_TSP.setSize(1, N);
+    buf_InverseFilter.clear();
+    buf_InverseFilter.setSize(1, N);
+    buf_recordedTSP.clear();
     buf_recordedTSP.setSize(1, N);
-    buf_impulseResponse.clear();
-    buf_impulseResponse.setSize(1, N);
-    std::vector<std::complex<float>> H(N);
-    std::vector<std::complex<float>> invH(N);
+    buf_IR.clear();
+    buf_IR.setSize(1, N);
+    std::vector<std::complex<float>> H(N);//TSP信号
+    std::vector<std::complex<float>> invH(N);//逆フィルタ
     
     for (int i = 0; i < N; ++i)
     {
         if(i <= N / 2)
         {
+            //TSP信号
             H[i].real(0.0);
             H[i].imag(-1.0 * alpha * pow((double)i / (double)N, 2.0));
-            H[i] = std::exp(H[i]) * std::complex<float>(amp, 0.0);
-            
+            H[i] = std::exp(H[i]);
+            //逆フィルタ
             invH[i].real(0.0);
             invH[i].imag(1.0 * alpha * pow((double)i / (double)N, 2.0));
-            invH[i] = std::exp(invH[i]) * std::complex<float>(amp, 0.0);
+            invH[i] = std::exp(invH[i]);
         }
         else
         {
@@ -169,39 +173,60 @@ void MainContentComponent::generateTSP(const int FFTOrder)
             invH[i] = std::conj(invH[N - i]);
         }
     }
-    fft.perform(H.data() , H.data(), true);//逆FFT
-    fft.perform(invH.data(), invH.data(), true);//逆FFT
-    
+    //逆FFT
+    fft.perform(H.data() , H.data(), true);
+    fft.perform(invH.data(), invH.data(), true);
+    //円状シフト
     const int roll = (N - J) / 2;
     std::rotate(H.rbegin(), H.rbegin() + roll, H.rend());
     std::rotate(invH.begin(), invH.begin() + roll, invH.end());
     
     for (int i = 0; i < N; ++i)
     {
-        buf_upTSP.setSample(0, i, H[i].real());
-        buf_downTSP.setSample(0, i, invH[i].real());
+        buf_TSP.setSample(0, i, H[i].real());
+        buf_InverseFilter.setSample(0, i, invH[i].real());
     }
+    
+    double normalizeFactor = 0.97 / buf_TSP.getMagnitude(0, buf_TSP.getNumSamples());
+    buf_TSP.applyGain(normalizeFactor);
+    buf_InverseFilter.applyGain(normalizeFactor);
 }
 
-void MainContentComponent::computeIR()
+void MainContentComponent::computeIR(const int order)
 {
-    exportWav(buf_recordedTSP, "preRecord.wav");
-    const int N = buf_downTSP.getNumSamples();
-    const auto numChannel = static_cast<uint32>(1);//monoral
-    const auto IRLength = static_cast<size_t> (N);
-    const double sampleRate = deviceManager.getCurrentAudioDevice()->getCurrentSampleRate();
-    dsp::ProcessSpec spec {sampleRate, static_cast<uint32>(N), numChannel};
-    convolution.prepare(spec);
-    convolution.copyAndLoadImpulseResponseFromBuffer(buf_downTSP, sampleRate, false, false, IRLength);
-    dsp::AudioBlock<float> block(buf_recordedTSP);
-    dsp::ProcessContextReplacing<float> context(block);
-    convolution.process(context);
-    buf_impulseResponse.makeCopyOf(buf_recordedTSP);
+    const int FFTOrder = order + 1;//円状畳み込みを直線上畳み込みと同等にするために2N分のFFTサイズを確保する
+    dsp::FFT fft(FFTOrder);
+    const int N = pow(2, order);//TSP信号長
+    std::vector<std::complex<float>> H(2*N, std::complex<float>(0.0f, 0.0f));//TSP信号
+    std::vector<std::complex<float>> invH(2*N, std::complex<float>(0.0f, 0.0f));//逆フィルタ
+    jassert(H.size() == pow(2, order));
     
-    exportWav(buf_impulseResponse, "ImpulseResponse.wav");
-    exportWav(buf_upTSP, "UpTSP.wav");
-    exportWav(buf_downTSP, "DownTSP.wav");
-    exportWav(buf_recordedTSP, "postRecord.wav");
+    exportWav(buf_recordedTSP, "recordSS.wav");
+    for(int i = 0; i < N; ++i)
+    {
+        H.at(i).real(buf_recordedTSP.getSample(0, i));
+        invH.at(i).real(buf_InverseFilter.getSample(0, i));
+    }
+    fft.perform(H.data(), H.data(), false);
+    fft.perform(invH.data(), invH.data(), false);
+    
+    for(int i = 0; i < 2*N; ++i)
+    {
+        H.at(i) = H.at(i) * invH.at(i);
+    }
+    
+    fft.perform(H.data(), H.data(), true);
+    
+    
+    for (int i = 0; i < N; ++i)
+    {
+        const int hindex = i + N;
+        buf_IR.setSample(0, i, H.at(hindex).real());
+    }
+    
+    double normalizeFactor = 1.0 / buf_IR.getMagnitude(0, buf_IR.getNumSamples());
+    buf_IR.applyGain(normalizeFactor);
+    exportWav(buf_IR, "ImpulseResponse.wav");
     measureState = measurementState::stopped;
 }
 
@@ -229,7 +254,7 @@ void MainContentComponent::showAudioSettings()
                                                     false,//Show MIDI output selector
                                                     false,//Stereo pair
                                                     false//Hide advanced option with button
-    );
+                                                    );
     
     audioSettingsComp.setSize (450, 250);
     DialogWindow::LaunchOptions o;
