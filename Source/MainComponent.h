@@ -1,6 +1,9 @@
 #pragma once
 #include "../JuceLibraryCode/JuceHeader.h"
 #include <complex>
+#include <chrono>
+#include <sstream>
+#include <iomanip>
 
 class MainContentComponent   :
 public AudioAppComponent,
@@ -34,6 +37,7 @@ private:
     void generateTSP(const int order);
     void computeIR(const int order);
     void exportWav(AudioSampleBuffer &bufferToWrite, String fileName);
+    std::string getTimeStamp();
     
     enum class measurementState {
         stopped,

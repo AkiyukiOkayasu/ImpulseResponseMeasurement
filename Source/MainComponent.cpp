@@ -288,7 +288,8 @@ void MainContentComponent::computeIR(const int order)
     std::vector<std::complex<float>> H(2*N, std::complex<float>(0.0f, 0.0f));//TSP信号
     std::vector<std::complex<float>> invH(2*N, std::complex<float>(0.0f, 0.0f));//逆フィルタ
     
-    exportWav(buf_recordedTSP, "recordedSweptSine.wav");
+    std::string timeStamp = getTimeStamp();
+    exportWav(buf_recordedTSP, timeStamp + "_recordedSweptSine.wav");
     for(int i = 0; i < N; ++i)
     {
         H.at(i).real(buf_recordedTSP.getSample(0, i));
@@ -313,7 +314,7 @@ void MainContentComponent::computeIR(const int order)
     
     double normalizeFactor = 1.0 / buf_IR.getMagnitude(0, buf_IR.getNumSamples());
     buf_IR.applyGain(normalizeFactor);
-    exportWav(buf_IR, "ImpulseResponse.wav");
+    exportWav(buf_IR, timeStamp + "_ImpulseResponse.wav");
     measureState = measurementState::stopped;
 }
 
@@ -358,4 +359,13 @@ void MainContentComponent::showAudioSettings()
     ScopedPointer<XmlElement> audioState (deviceManager.createStateXml());
     appProperties->getUserSettings()->setValue ("audioDeviceState", audioState);
     appProperties->getUserSettings()->saveIfNeeded();
+}
+
+std::string MainContentComponent::getTimeStamp()
+{
+    auto now = std::chrono::system_clock::now();
+    auto now_c = std::chrono::system_clock::to_time_t(now);
+    std::stringstream ss;
+    ss << std::put_time(localtime(&now_c), "%F %T");
+    return ss.str();
 }
