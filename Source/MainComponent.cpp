@@ -282,9 +282,9 @@ void MainContentComponent::generateTSP(const int order)
 
 void MainContentComponent::computeIR(const int order)
 {
+    const int N = pow(2, order);//TSP信号長
     const int FFTOrder = order + 1;//円状畳み込みを直線上畳み込みと同等にするために2N分のFFTサイズを確保する
     dsp::FFT fft(FFTOrder);
-    const int N = pow(2, order);//TSP信号長
     std::vector<std::complex<float>> H(2*N, std::complex<float>(0.0f, 0.0f));//TSP信号
     std::vector<std::complex<float>> invH(2*N, std::complex<float>(0.0f, 0.0f));//逆フィルタ
     
@@ -305,13 +305,14 @@ void MainContentComponent::computeIR(const int order)
     
     fft.perform(H.data(), H.data(), true);
     
-    
+    const int offset = N;//円状畳み込みのオフセット(後半のみ取り出す)
     for (int i = 0; i < N; ++i)
     {
-        const int hindex = i + N;
-        buf_IR.setSample(0, i, H.at(hindex).real());
+        const int index = i + offset;
+        buf_IR.setSample(0, i, H.at(index).real());
     }
     
+    //IRのノーマライズ
     double normalizeFactor = 1.0 / buf_IR.getMagnitude(0, buf_IR.getNumSamples());
     buf_IR.applyGain(normalizeFactor);
     exportWav(buf_IR, timeStamp + "_ImpulseResponse.wav");
@@ -321,14 +322,13 @@ void MainContentComponent::computeIR(const int order)
 void MainContentComponent::exportWav(AudioSampleBuffer &bufferToWrite, String fileName)
 {
     const double sampleRate = deviceManager.getCurrentAudioDevice()->getCurrentSampleRate();
-    const int numChannel = bufferToWrite.getNumChannels();//Channel
-    const int bit = 32;//BitDepth
+    const int numChannel = bufferToWrite.getNumChannels();
+    const int bitDepth = 32;
     File file(File::getSpecialLocation(File::SpecialLocationType::userDesktopDirectory).getChildFile(fileName));
     file.deleteFile();
     ScopedPointer<FileOutputStream>  fos(file.createOutputStream());
     WavAudioFormat wavFormat;
-    ScopedPointer<AudioFormatWriter> writer(wavFormat.createWriterFor(fos, sampleRate, numChannel, bit, StringPairArray(), 0));
-    
+    ScopedPointer<AudioFormatWriter> writer(wavFormat.createWriterFor(fos, sampleRate, numChannel, bitDepth, StringPairArray(), 0));
     fos.release();
     writer->writeFromAudioSampleBuffer(bufferToWrite, 0, bufferToWrite.getNumSamples());
 }
