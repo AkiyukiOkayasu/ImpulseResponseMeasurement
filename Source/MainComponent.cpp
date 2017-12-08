@@ -89,10 +89,10 @@ MainContentComponent::MainContentComponent()
     appProperties->setStorageParameters (options);
     auto userSettings = appProperties->getUserSettings();
     ScopedPointer<XmlElement> savedAudioState (userSettings->getXmlValue ("audioDeviceState"));//オーディオインターフェースの設定
-    ScopedPointer<XmlElement> savedParameterGateSettings (userSettings->getXmlValue("parameterSettings"));//パラメータの設定
-    const int odr = savedParameterGateSettings ? savedParameterGateSettings->getIntAttribute("order") : 16;
-    const int rept = savedParameterGateSettings ? savedParameterGateSettings->getIntAttribute("repeat") : 5;
-    const int silnce = savedParameterGateSettings ? savedParameterGateSettings->getDoubleAttribute("preSlirence") : 1.5;
+    ScopedPointer<XmlElement> savedParameter (userSettings->getXmlValue("parameterSettings"));//パラメータの設定
+    const int odr = savedParameter && savedParameter->hasAttribute("order") ? savedParameter->getIntAttribute("order") : 16;
+    const int rept = savedParameter && savedParameter->hasAttribute("repeat") ? savedParameter->getIntAttribute("repeat") : 5;
+    const double silnce = savedParameter && savedParameter->hasAttribute("preSilence") ? savedParameter->getDoubleAttribute("preSilence") : 1.5;
     sl_order.setValue(odr, dontSendNotification);
     sl_repeat.setValue(rept, dontSendNotification);
     sl_preSilence.setValue(silnce, dontSendNotification);
@@ -185,7 +185,7 @@ void MainContentComponent::sliderValueChanged (Slider* slider)
     ScopedPointer<XmlElement> parameterSettings = new XmlElement(xmltag);
     parameterSettings->setAttribute("order", (int)sl_order.getValue());
     parameterSettings->setAttribute("repeat", (int)sl_repeat.getValue());
-    parameterSettings->setAttribute("preSlirence", sl_preSilence.getValue());
+    parameterSettings->setAttribute("preSilence", sl_preSilence.getValue());
     appProperties->getUserSettings()->setValue ("parameterSettings", parameterSettings);
     appProperties->getUserSettings()->saveIfNeeded();
 }
