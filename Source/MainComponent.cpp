@@ -1,5 +1,7 @@
 #include "MainComponent.h"
 
+constexpr int lengthN = 16;
+
 MainContentComponent::MainContentComponent()
 {
     setSize (800, 450);
@@ -144,7 +146,7 @@ void MainContentComponent::generateTSP(const int FFTOrder)
     const int N = pow(2, FFTOrder);//TSP信号長
     const int J = N / 4;//TSP実行長
     const double alpha = 2.0 * double_Pi * (double)J;
-//    constexpr float amp = 60.0;
+    //    constexpr float amp = 60.0;
     buf_TSP.clear();
     buf_TSP.setSize(1, N);
     buf_InverseFilter.clear();
@@ -198,30 +200,35 @@ void MainContentComponent::generateTSP(const int FFTOrder)
 
 void MainContentComponent::computeIR(const int FFTOrder)
 {
-    dsp::FFT fft(FFTOrder);
+    const int order = FFTOrder + 1;
+    dsp::FFT fft(order);
     const int N = pow(2, FFTOrder);//TSP信号長
     std::vector<std::complex<float>> H(2*N, std::complex<float>(0.0f, 0.0f));//TSP信号
     std::vector<std::complex<float>> invH(2*N, std::complex<float>(0.0f, 0.0f));//逆フィルタ
     
+    exportWav(buf_recordedTSP, "recordSS.wav");
     for(int i = 0; i < N; ++i)
     {
         H.at(i).real(buf_recordedTSP.getSample(0, i));//////////////////////////////////
         invH.at(i).real(buf_InverseFilter.getSample(0, i));
     }
-    
+    jassert(H.size() == pow(2, order));
+    std::cout<<H.size()<<":"<<pow(2, order)<<std::endl;
     fft.perform(H.data(), H.data(), false);
     fft.perform(invH.data(), invH.data(), false);
     
-    for(int i = 0; i < 2 * N; ++i)
+    for(int i = 0; i < 2*N; ++i)
     {
         H.at(i) = H.at(i) * invH.at(i);
     }
     
     fft.perform(H.data(), H.data(), true);
     
+    
     for (int i = 0; i < N; ++i)
     {
-        buf_IR.setSample(0, i, H.at(i).real());
+        const int hindex = i + N;
+        buf_IR.setSample(0, i, H.at(hindex).real());
     }
     
     double normalizeFactor = 1.0 / buf_IR.getMagnitude(0, buf_IR.getNumSamples());
@@ -254,7 +261,7 @@ void MainContentComponent::showAudioSettings()
                                                     false,//Show MIDI output selector
                                                     false,//Stereo pair
                                                     false//Hide advanced option with button
-    );
+                                                    );
     
     audioSettingsComp.setSize (450, 250);
     DialogWindow::LaunchOptions o;
