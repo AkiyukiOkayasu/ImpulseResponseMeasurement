@@ -29,7 +29,6 @@ MainContentComponent::MainContentComponent()
     setAudioChannels (1, 1, savedAudioState);
     deviceManager.addAudioCallback(&tspPlayer);
     deviceManager.addAudioCallback(&irPlayer);
-    
 }
 
 MainContentComponent::~MainContentComponent()
@@ -138,10 +137,10 @@ void MainContentComponent::menuItemSelected(int menuItemID, int topLevelMenuInde
     if (menuItemID == 1) showAudioSettings();
 }
 
-void MainContentComponent::generateTSP(const int FFTOrder)
+void MainContentComponent::generateTSP(const int order)
 {
-    dsp::FFT fft(FFTOrder);
-    const int N = pow(2, FFTOrder);//TSP信号長
+    dsp::FFT fft(order);
+    const int N = pow(2, order);//TSP信号長
     const int J = N / 4;//TSP実行長
     const double alpha = 2.0 * double_Pi * (double)J;
     buf_TSP.clear();
@@ -193,11 +192,11 @@ void MainContentComponent::generateTSP(const int FFTOrder)
     buf_InverseFilter.applyGain(normalizeFactor);
 }
 
-void MainContentComponent::computeIR(const int FFTOrder)
+void MainContentComponent::computeIR(const int order)
 {
-    const int order = FFTOrder + 1;
-    dsp::FFT fft(order);
-    const int N = pow(2, FFTOrder);//TSP信号長
+    const int FFTOrder = order + 1;//円状畳み込みを直線上畳み込みと同等にするために2N分のFFTサイズを確保する
+    dsp::FFT fft(FFTOrder);
+    const int N = pow(2, order);//TSP信号長
     std::vector<std::complex<float>> H(2*N, std::complex<float>(0.0f, 0.0f));//TSP信号
     std::vector<std::complex<float>> invH(2*N, std::complex<float>(0.0f, 0.0f));//逆フィルタ
     jassert(H.size() == pow(2, order));

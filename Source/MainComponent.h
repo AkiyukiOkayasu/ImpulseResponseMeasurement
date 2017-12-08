@@ -1,6 +1,5 @@
 #pragma once
 #include "../JuceLibraryCode/JuceHeader.h"
-#include <array>
 #include <complex>
 
 class MainContentComponent   :
@@ -32,8 +31,8 @@ public:
     void showAudioSettings();
     
 private:
-    void generateTSP(const int FFTOrder);
-    void computeIR(const int FFTOrder);
+    void generateTSP(const int order);
+    void computeIR(const int order);
     void exportWav(AudioSampleBuffer &bufferToWrite, String fileName);
     
     enum class measurementState {
@@ -54,8 +53,6 @@ private:
     AudioSampleBuffer buf_recordedTSP;
     AudioSampleBuffer buf_IR;
     unsigned int recordIndex = 0;
-//    dsp::ProcessorDuplicator<dsp::FIR::Filter<float>, dsp::FIR::Coefficients<float>> inverseFilter;
-//    dsp::Convolution
     ScopedPointer<ApplicationProperties> appProperties;//オーディオインターフェース,ノイズゲート設;定の記録、呼び出し用
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainContentComponent)
