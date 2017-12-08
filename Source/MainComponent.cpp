@@ -97,8 +97,7 @@ MainContentComponent::MainContentComponent()
     sl_repeat.setValue(rept, dontSendNotification);
     sl_preSilence.setValue(silnce, dontSendNotification);
     setAudioChannels (1, 1, savedAudioState);
-    deviceManager.addAudioCallback(&tspPlayer);
-    deviceManager.addAudioCallback(&irPlayer);
+    deviceManager.addAudioCallback(&sweptSinePlayer);
 }
 
 MainContentComponent::~MainContentComponent()
@@ -110,7 +109,7 @@ MainContentComponent::~MainContentComponent()
 //==============================================================================
 void MainContentComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
-    generateTSP(sl_order.getValue());
+    generateSweptSine(sl_order.getValue());
 }
 
 void MainContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& bufferToFill)
@@ -127,14 +126,14 @@ void MainContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& buff
         case measurementState::started:
             for (int sample = 0; sample < bufferToFill.buffer->getNumSamples(); ++sample)
             {
-                if (recordIndex >= buf_recordedTSP.getNumSamples())
+                if (recordIndex >= buf_recordedSweptSine.getNumSamples())
                 {
                     measureState = measurementState::computingIR;
                     computeIR(sl_order.getValue());
                     break;
                 }
                 
-                buf_recordedTSP.setSample(0, recordIndex, bufferToFill.buffer->getSample(0, sample));
+                buf_recordedSweptSine.setSample(0, recordIndex, bufferToFill.buffer->getSample(0, sample));
                 recordIndex++;
             }
             break;
@@ -171,7 +170,7 @@ void MainContentComponent::sliderValueChanged (Slider* slider)
 {
     if (slider == &sl_order)
     {
-        generateTSP(sl_order.getValue());
+        generateSweptSine(sl_order.getValue());
     }
     else if (slider == &sl_repeat)
     {
@@ -194,13 +193,13 @@ void MainContentComponent::buttonClicked (Button* button)
 {
     if (button == &btn_measure)
     {
-        const int size = buf_TSP.getNumSamples();
-        buf_recordedTSP.clear();
-        buf_recordedTSP.setSize(1, size);
+        const int size = buf_sweptSine.getNumSamples();
+        buf_recordedSweptSine.clear();
+        buf_recordedSweptSine.setSize(1, size);
         buf_IR.clear();
         buf_IR.setSize(1, size);
         measureState = measurementState::starting;
-        tspPlayer.play(&buf_TSP, false, true);
+        sweptSinePlayer.play(&buf_sweptSine, false, true);
     }
     else if (button == &btn_calib)
     {
@@ -225,28 +224,28 @@ void MainContentComponent::menuItemSelected(int menuItemID, int topLevelMenuInde
     if (menuItemID == 1) showAudioSettings();
 }
 
-void MainContentComponent::generateTSP(const int order)
+void MainContentComponent::generateSweptSine(const int order)
 {
     dsp::FFT fft(order);
-    const int N = pow(2, order);//TSP信号長
-    const int J = N / 4;//TSP実行長
+    const int N = pow(2, order);//SweptSine信号長
+    const int J = N / 4;//SweptSine実行長
     const double alpha = 2.0 * double_Pi * (double)J;
-    buf_TSP.clear();
-    buf_TSP.setSize(1, N);
-    buf_InverseFilter.clear();
-    buf_InverseFilter.setSize(1, N);
-    buf_recordedTSP.clear();
-    buf_recordedTSP.setSize(1, N);
+    buf_sweptSine.clear();
+    buf_sweptSine.setSize(1, N);
+    buf_inverseFilter.clear();
+    buf_inverseFilter.setSize(1, N);
+    buf_recordedSweptSine.clear();
+    buf_recordedSweptSine.setSize(1, N);
     buf_IR.clear();
     buf_IR.setSize(1, N);
-    std::vector<std::complex<float>> H(N);//TSP信号
+    std::vector<std::complex<float>> H(N);//SweptSine信号
     std::vector<std::complex<float>> invH(N);//逆フィルタ
     
     for (int i = 0; i < N; ++i)
     {
         if(i <= N / 2)
         {
-            //TSP信号
+            //SweptSine信号
             H[i].real(0.0);
             H[i].imag(-1.0 * alpha * pow((double)i / (double)N, 2.0));
             H[i] = std::exp(H[i]);
@@ -271,29 +270,30 @@ void MainContentComponent::generateTSP(const int order)
     
     for (int i = 0; i < N; ++i)
     {
-        buf_TSP.setSample(0, i, H[i].real());
-        buf_InverseFilter.setSample(0, i, invH[i].real());
+        buf_sweptSine.setSample(0, i, H[i].real());
+        buf_inverseFilter.setSample(0, i, invH[i].real());
     }
     
-    double normalizeFactor = 0.97 / buf_TSP.getMagnitude(0, buf_TSP.getNumSamples());
-    buf_TSP.applyGain(normalizeFactor);
-    buf_InverseFilter.applyGain(normalizeFactor);
+    //ノーマライズ
+    double normalizeFactor = 0.97 / buf_sweptSine.getMagnitude(0, buf_sweptSine.getNumSamples());
+    buf_sweptSine.applyGain(normalizeFactor);
+    buf_inverseFilter.applyGain(normalizeFactor);
 }
 
 void MainContentComponent::computeIR(const int order)
 {
-    const int N = pow(2, order);//TSP信号長
+    const int N = pow(2, order);//SweptSineP信号長
     const int FFTOrder = order + 1;//円状畳み込みを直線上畳み込みと同等にするために2N分のFFTサイズを確保する
     dsp::FFT fft(FFTOrder);
-    std::vector<std::complex<float>> H(2*N, std::complex<float>(0.0f, 0.0f));//TSP信号
+    std::vector<std::complex<float>> H(2*N, std::complex<float>(0.0f, 0.0f));//SweptSine信号
     std::vector<std::complex<float>> invH(2*N, std::complex<float>(0.0f, 0.0f));//逆フィルタ
     
     std::string timeStamp = getTimeStamp();
-    exportWav(buf_recordedTSP, timeStamp + "_recordedSweptSine.wav");
+    exportWav(buf_recordedSweptSine, timeStamp + "_recordedSweptSine.wav");
     for(int i = 0; i < N; ++i)
     {
-        H.at(i).real(buf_recordedTSP.getSample(0, i));
-        invH.at(i).real(buf_InverseFilter.getSample(0, i));
+        H.at(i).real(buf_recordedSweptSine.getSample(0, i));
+        invH.at(i).real(buf_inverseFilter.getSample(0, i));
     }
     fft.perform(H.data(), H.data(), false);
     fft.perform(invH.data(), invH.data(), false);
@@ -312,9 +312,10 @@ void MainContentComponent::computeIR(const int order)
         buf_IR.setSample(0, i, H.at(index).real());
     }
     
-    //IRのノーマライズ
+    //ノーマライズ
     double normalizeFactor = 1.0 / buf_IR.getMagnitude(0, buf_IR.getNumSamples());
     buf_IR.applyGain(normalizeFactor);
+    
     exportWav(buf_IR, timeStamp + "_ImpulseResponse.wav");
     measureState = measurementState::stopped;
 }

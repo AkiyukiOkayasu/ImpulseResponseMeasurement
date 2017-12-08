@@ -34,7 +34,7 @@ public:
     void showAudioSettings();
     
 private:
-    void generateTSP(const int order);
+    void generateSweptSine(const int order);
     void computeIR(const int order);
     void exportWav(AudioSampleBuffer &bufferToWrite, String fileName);
     std::string getTimeStamp();
@@ -47,8 +47,7 @@ private:
     };
     measurementState measureState = measurementState::stopped;
     AudioFormatManager formatManager;
-    SoundPlayer tspPlayer;
-    SoundPlayer irPlayer;
+    SoundPlayer sweptSinePlayer;
     Slider sl_order;
     Label lbl_order;
     Label lbl_appName;
@@ -60,12 +59,12 @@ private:
     TextButton btn_measure;
     TextButton btn_calib;
     Label lbl_latency;
-    AudioSampleBuffer buf_TSP;
-    AudioSampleBuffer buf_InverseFilter;
-    AudioSampleBuffer buf_recordedTSP;
+    AudioSampleBuffer buf_sweptSine;
+    AudioSampleBuffer buf_inverseFilter;
+    AudioSampleBuffer buf_recordedSweptSine;
     AudioSampleBuffer buf_IR;
-    unsigned int recordIndex = 0;
-    ScopedPointer<ApplicationProperties> appProperties;//オーディオインターフェース,ノイズゲート設;定の記録、呼び出し用
+    unsigned long recordIndex = 0;
+    ScopedPointer<ApplicationProperties> appProperties;//オーディオ設定,パラメータの記録用
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainContentComponent)
 };
