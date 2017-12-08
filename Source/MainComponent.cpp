@@ -1,7 +1,5 @@
 #include "MainComponent.h"
 
-constexpr int lengthN = 16;
-
 MainContentComponent::MainContentComponent()
 {
     setSize (800, 450);
@@ -146,7 +144,6 @@ void MainContentComponent::generateTSP(const int FFTOrder)
     const int N = pow(2, FFTOrder);//TSP信号長
     const int J = N / 4;//TSP実行長
     const double alpha = 2.0 * double_Pi * (double)J;
-    //    constexpr float amp = 60.0;
     buf_TSP.clear();
     buf_TSP.setSize(1, N);
     buf_InverseFilter.clear();
@@ -155,8 +152,6 @@ void MainContentComponent::generateTSP(const int FFTOrder)
     buf_recordedTSP.setSize(1, N);
     buf_IR.clear();
     buf_IR.setSize(1, N);
-    const double sampleRate = deviceManager.getCurrentAudioDevice()->getCurrentSampleRate();
-    const auto numChannel = static_cast<uint32>(1);//monoral
     std::vector<std::complex<float>> H(N);//TSP信号
     std::vector<std::complex<float>> invH(N);//逆フィルタ
     
@@ -205,15 +200,14 @@ void MainContentComponent::computeIR(const int FFTOrder)
     const int N = pow(2, FFTOrder);//TSP信号長
     std::vector<std::complex<float>> H(2*N, std::complex<float>(0.0f, 0.0f));//TSP信号
     std::vector<std::complex<float>> invH(2*N, std::complex<float>(0.0f, 0.0f));//逆フィルタ
+    jassert(H.size() == pow(2, order));
     
     exportWav(buf_recordedTSP, "recordSS.wav");
     for(int i = 0; i < N; ++i)
     {
-        H.at(i).real(buf_recordedTSP.getSample(0, i));//////////////////////////////////
+        H.at(i).real(buf_recordedTSP.getSample(0, i));
         invH.at(i).real(buf_InverseFilter.getSample(0, i));
     }
-    jassert(H.size() == pow(2, order));
-    std::cout<<H.size()<<":"<<pow(2, order)<<std::endl;
     fft.perform(H.data(), H.data(), false);
     fft.perform(invH.data(), invH.data(), false);
     
