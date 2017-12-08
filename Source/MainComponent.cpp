@@ -2,21 +2,83 @@
 
 MainContentComponent::MainContentComponent()
 {
-    setSize (800, 450);
     if(JUCE_MAC) setMacMainMenu(this);
     formatManager.registerBasicFormats();
     
-    addAndMakeVisible(btn_measurement);
-    btn_measurement.setButtonText("Measurement Start");
-    btn_measurement.addListener(this);
+    addAndMakeVisible(lbl_appName);
+    lbl_appName.setText("IR measure", dontSendNotification);
+    lbl_appName.setFont (Font (Font::getDefaultMonospacedFontName(), 26.00f, Font::plain).withTypefaceStyle ("Regular"));
+    lbl_appName.setJustificationType (Justification::centredLeft);
+    lbl_appName.setEditable (false, false, false);
+    lbl_appName.setColour (TextEditor::textColourId, Colours::black);
+    lbl_appName.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
+    addAndMakeVisible (lbl_version);
+    std::string version = "ver" + std::string(ProjectInfo::versionString);
+    lbl_version.setText(version, dontSendNotification);
+    lbl_version.setFont (Font (Font::getDefaultMonospacedFontName(), 15.00f, Font::plain).withTypefaceStyle ("Regular"));
+    lbl_version.setJustificationType (Justification::centredLeft);
+    lbl_version.setEditable (false, false, false);
+    lbl_version.setColour (TextEditor::textColourId, Colours::black);
+    lbl_version.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
     
-    addAndMakeVisible(btn_tspGenerate);
-    btn_tspGenerate.setButtonText("TSP Generate");
-    btn_tspGenerate.addListener(this);
+    addAndMakeVisible (sl_order);
+    sl_order.setRange (7, 24, 1);
+    sl_order.setSliderStyle (Slider::IncDecButtons);
+    sl_order.setTextBoxStyle (Slider::TextBoxLeft, false, 60, 20);
+    sl_order.addListener (this);
+    addAndMakeVisible (lbl_order);
+    lbl_order.setText("Swept-Sine Order", dontSendNotification);
+    lbl_order.setFont (Font (Font::getDefaultMonospacedFontName(), 15.00f, Font::plain).withTypefaceStyle ("Regular"));
+    lbl_order.setJustificationType (Justification::centredLeft);
+    lbl_order.setEditable (false, false, false);
+    lbl_order.setColour (TextEditor::textColourId, Colours::black);
+    lbl_order.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
+    lbl_order.attachToComponent(&sl_order, true);
     
-    addAndMakeVisible(btn_playIR);
-    btn_playIR.setButtonText("IR Play");
-    btn_playIR.addListener(this);
+    addAndMakeVisible (sl_repeat);
+    sl_repeat.setRange (1, 8, 1);
+    sl_repeat.setSliderStyle (Slider::IncDecButtons);
+    sl_repeat.setTextBoxStyle (Slider::TextBoxLeft, false, 60, 20);
+    sl_repeat.addListener (this);
+    addAndMakeVisible (lbl_repeat);
+    lbl_repeat.setText("Repeat", dontSendNotification);
+    lbl_repeat.setFont (Font (Font::getDefaultMonospacedFontName(), 15.00f, Font::plain).withTypefaceStyle ("Regular"));
+    lbl_repeat.setJustificationType (Justification::centredLeft);
+    lbl_repeat.setEditable (false, false, false);
+    lbl_repeat.setColour (TextEditor::textColourId, Colours::black);
+    lbl_repeat.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
+    lbl_repeat.attachToComponent(&sl_repeat, true);
+    
+    addAndMakeVisible (sl_preSilence);
+    sl_preSilence.setRange (0, 20, 0.5);
+    sl_preSilence.setSliderStyle (Slider::IncDecButtons);
+    sl_preSilence.setTextBoxStyle (Slider::TextBoxLeft, false, 60, 20);
+    sl_preSilence.addListener (this);
+    addAndMakeVisible (lbl_preSilence);
+    lbl_preSilence.setText("Pre Silence(sec)", dontSendNotification);
+    lbl_preSilence.setFont (Font (Font::getDefaultMonospacedFontName(), 15.00f, Font::plain).withTypefaceStyle ("Regular"));
+    lbl_preSilence.setJustificationType (Justification::centredLeft);
+    lbl_preSilence.setEditable (false, false, false);
+    lbl_preSilence.setColour (TextEditor::textColourId, Colours::black);
+    lbl_preSilence.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
+    lbl_preSilence.attachToComponent(&sl_preSilence, true);
+    
+    addAndMakeVisible (btn_calib);
+    btn_calib.setButtonText (TRANS("Calibrate Latency"));
+    btn_calib.addListener (this);
+    addAndMakeVisible (lbl_latency);
+    lbl_latency.setText("Latency is xxx samples", dontSendNotification);
+    lbl_latency.setFont (Font (15.00f, Font::plain).withTypefaceStyle ("Regular"));
+    lbl_latency.setJustificationType (Justification::centredLeft);
+    lbl_latency.setEditable (false, false, false);
+    lbl_latency.setColour (TextEditor::textColourId, Colours::black);
+    lbl_latency.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
+    
+    addAndMakeVisible (btn_measure);
+    btn_measure.setButtonText (TRANS("Start Measurement"));
+    btn_measure.addListener (this);
+    
+    setSize (400, 260);
     
     //保存したパラメータをXMLファイルから呼び出し
     PropertiesFile::Options options;
@@ -25,7 +87,15 @@ MainContentComponent::MainContentComponent()
     options.osxLibrarySubFolder = "Preferences";
     appProperties = new ApplicationProperties();
     appProperties->setStorageParameters (options);
-    ScopedPointer<XmlElement> savedAudioState (appProperties->getUserSettings()->getXmlValue ("audioDeviceState"));//オーディオインターフェースの設定
+    auto userSettings = appProperties->getUserSettings();
+    ScopedPointer<XmlElement> savedAudioState (userSettings->getXmlValue ("audioDeviceState"));//オーディオインターフェースの設定
+    ScopedPointer<XmlElement> savedParameterGateSettings (userSettings->getXmlValue("parameterSettings"));//パラメータの設定
+    const int odr = savedParameterGateSettings ? savedParameterGateSettings->getIntAttribute("order") : 16;
+    const int rept = savedParameterGateSettings ? savedParameterGateSettings->getIntAttribute("repeat") : 5;
+    const int silnce = savedParameterGateSettings ? savedParameterGateSettings->getDoubleAttribute("preSlirence") : 1.5;
+    sl_order.setValue(odr, dontSendNotification);
+    sl_repeat.setValue(rept, dontSendNotification);
+    sl_preSilence.setValue(silnce, dontSendNotification);
     setAudioChannels (1, 1, savedAudioState);
     deviceManager.addAudioCallback(&tspPlayer);
     deviceManager.addAudioCallback(&irPlayer);
@@ -40,7 +110,7 @@ MainContentComponent::~MainContentComponent()
 //==============================================================================
 void MainContentComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
-    generateTSP(16);
+    generateTSP(sl_order.getValue());
 }
 
 void MainContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& bufferToFill)
@@ -60,7 +130,7 @@ void MainContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& buff
                 if (recordIndex >= buf_recordedTSP.getNumSamples())
                 {
                     measureState = measurementState::computingIR;
-                    computeIR(16);
+                    computeIR(sl_order.getValue());
                     break;
                 }
                 
@@ -86,20 +156,43 @@ void MainContentComponent::paint (Graphics& g)
 
 void MainContentComponent::resized()
 {
-    auto r = getLocalBounds();
-    btn_tspGenerate.setBounds(r.removeFromTop(100));
-    btn_measurement.setBounds(r.removeFromTop(100));
-    btn_playIR.setBounds(r.removeFromTop(100));
+    lbl_appName.setBounds (10, 11, 170, 24);
+    lbl_version.setBounds (153, 14, 90, 24);
+    sl_order.setBounds (160, 54, 150, 24);
+    sl_repeat.setBounds (160, 86, 150, 24);
+    sl_preSilence.setBounds (160, 118, 150, 24);
+    btn_calib.setBounds (10, 161, 140, 28);
+    lbl_latency.setBounds (151, 163, 150, 24);
+    btn_measure.setBounds (10, 212, 140, 28);
 }
 
 //==============================================================================
 void MainContentComponent::sliderValueChanged (Slider* slider)
 {
+    if (slider == &sl_order)
+    {
+        generateTSP(sl_order.getValue());
+    }
+    else if (slider == &sl_repeat)
+    {
+    }
+    else if (slider == &sl_preSilence)
+    {
+    }
+    
+    //スライダーの値をXMLで保存
+    String xmltag =  "parameter";
+    ScopedPointer<XmlElement> parameterSettings = new XmlElement(xmltag);
+    parameterSettings->setAttribute("order", (int)sl_order.getValue());
+    parameterSettings->setAttribute("repeat", (int)sl_repeat.getValue());
+    parameterSettings->setAttribute("preSlirence", sl_preSilence.getValue());
+    appProperties->getUserSettings()->setValue ("parameterSettings", parameterSettings);
+    appProperties->getUserSettings()->saveIfNeeded();
 }
 
 void MainContentComponent::buttonClicked (Button* button)
 {
-    if(button == &btn_measurement)
+    if (button == &btn_measure)
     {
         const int size = buf_TSP.getNumSamples();
         buf_recordedTSP.clear();
@@ -109,13 +202,8 @@ void MainContentComponent::buttonClicked (Button* button)
         measureState = measurementState::starting;
         tspPlayer.play(&buf_TSP, false, true);
     }
-    else if(button == &btn_tspGenerate)
+    else if (button == &btn_calib)
     {
-        generateTSP(16);
-    }
-    else if(button == &btn_playIR)
-    {
-        irPlayer.play(&buf_IR, false, true);
     }
 }
 
@@ -199,9 +287,8 @@ void MainContentComponent::computeIR(const int order)
     const int N = pow(2, order);//TSP信号長
     std::vector<std::complex<float>> H(2*N, std::complex<float>(0.0f, 0.0f));//TSP信号
     std::vector<std::complex<float>> invH(2*N, std::complex<float>(0.0f, 0.0f));//逆フィルタ
-    jassert(H.size() == pow(2, order));
     
-    exportWav(buf_recordedTSP, "recordSS.wav");
+    exportWav(buf_recordedTSP, "recordedSweptSine.wav");
     for(int i = 0; i < N; ++i)
     {
         H.at(i).real(buf_recordedTSP.getSample(0, i));
@@ -212,7 +299,7 @@ void MainContentComponent::computeIR(const int order)
     
     for(int i = 0; i < 2*N; ++i)
     {
-        H.at(i) = H.at(i) * invH.at(i);
+        H.at(i) *= invH.at(i);
     }
     
     fft.perform(H.data(), H.data(), true);
