@@ -367,6 +367,6 @@ std::string MainContentComponent::getTimeStamp()
     auto now = std::chrono::system_clock::now();
     auto now_c = std::chrono::system_clock::to_time_t(now);
     std::stringstream ss;
-    ss << std::put_time(localtime(&now_c), "%F %T");
+    ss << std::put_time(localtime(&now_c), "%Y%m%d_%H%M%S");
     return ss.str();
 }
