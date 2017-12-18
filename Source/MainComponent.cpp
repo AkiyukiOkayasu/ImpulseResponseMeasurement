@@ -119,9 +119,11 @@ MainContentComponent::MainContentComponent()
     ScopedPointer<XmlElement> savedAudioState (userSettings->getXmlValue ("audioDeviceState"));//オーディオインターフェースの設定
     ScopedPointer<XmlElement> savedParameter (userSettings->getXmlValue("parameterSettings"));//パラメータの設定
     const double duration = savedParameter && savedParameter->hasAttribute("duration") ? savedParameter->getDoubleAttribute("duration") : 3.0;
-    const double silnce = savedParameter && savedParameter->hasAttribute("preSilence") ? savedParameter->getDoubleAttribute("preSilence") : 1.5;
+    const double preSilnce = savedParameter && savedParameter->hasAttribute("preSilence") ? savedParameter->getDoubleAttribute("preSilence") : 1.5;
+    const double postSilnce = savedParameter && savedParameter->hasAttribute("postSilence") ? savedParameter->getDoubleAttribute("postSilence") : 2.5;
     sl_duration.setValue(duration, dontSendNotification);
-    sl_preSilence.setValue(silnce, dontSendNotification);
+    sl_preSilence.setValue(preSilnce, dontSendNotification);
+    sl_postSilence.setValue(postSilnce, dontSendNotification);
     setAudioChannels (1, 1, savedAudioState);
     deviceManager.addAudioCallback(&sweptSinePlayer);
 }
@@ -209,6 +211,7 @@ void MainContentComponent::sliderValueChanged (Slider* slider)
     String xmltag =  "parameter";
     ScopedPointer<XmlElement> parameterSettings = new XmlElement(xmltag);
     parameterSettings->setAttribute("preSilence", sl_preSilence.getValue());
+    parameterSettings->setAttribute("postSilence", sl_postSilence.getValue());
     parameterSettings->setAttribute("duration", sl_duration.getValue());
     appProperties->getUserSettings()->setValue ("parameterSettings", parameterSettings);
     appProperties->getUserSettings()->saveIfNeeded();
