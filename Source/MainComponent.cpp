@@ -5,6 +5,34 @@ MainContentComponent::MainContentComponent()
     if(JUCE_MAC) setMacMainMenu(this);
     formatManager.registerBasicFormats();
     
+    addAndMakeVisible(sl_freqRange.range);
+    sl_freqRange.range.setRange (1, 20000, 1);
+    sl_freqRange.range.setSkewFactorFromMidPoint(4000.0);
+    sl_freqRange.range.setSliderStyle (Slider::TwoValueHorizontal);
+    sl_freqRange.range.setTextBoxStyle (Slider::NoTextBox, true, 80, 20);
+    sl_freqRange.range.setColour (Slider::thumbColourId, Colours::aqua);
+    sl_freqRange.range.setColour (Slider::trackColourId, Colour (0xff0093ff));
+    sl_freqRange.range.addListener (this);
+    addAndMakeVisible(sl_freqRange.minNumberBox);
+    sl_freqRange.minNumberBox.setRange (1, 20000, 1);
+    sl_freqRange.minNumberBox.setSliderStyle (Slider::LinearBarVertical);
+    sl_freqRange.minNumberBox.setTextBoxStyle (Slider::TextBoxLeft, false, 80, 20);
+    sl_freqRange.minNumberBox.setColour (Slider::trackColourId, Colour (0x00181f22));
+    sl_freqRange.minNumberBox.setTextValueSuffix("Hz");
+    sl_freqRange.minNumberBox.setVelocityBasedMode(true);
+    addAndMakeVisible(sl_freqRange.maxNumberBox);
+    sl_freqRange.maxNumberBox.setRange (1, 20000, 1);
+    sl_freqRange.maxNumberBox.setSliderStyle (Slider::LinearBarVertical);
+    sl_freqRange.maxNumberBox.setTextBoxStyle (Slider::TextBoxLeft, false, 80, 20);
+    sl_freqRange.maxNumberBox.setColour (Slider::trackColourId, Colour (0x00181f22));
+    sl_freqRange.maxNumberBox.setTextValueSuffix("Hz");
+    sl_freqRange.maxNumberBox.setVelocityBasedMode(true);
+    sl_freqRange.minNumberBox.getValueObject().referTo(sl_freqRange.minSharedValue);
+    sl_freqRange.maxNumberBox.getValueObject().referTo(sl_freqRange.maxSharedValue);
+    sl_freqRange.range.getMinValueObject().referTo (sl_freqRange.minSharedValue);
+    sl_freqRange.range.getMaxValueObject().referTo (sl_freqRange.maxSharedValue);
+    
+    
     addAndMakeVisible(lbl_appName);
     lbl_appName.setText("IR measure", dontSendNotification);
     lbl_appName.setFont (Font (Font::getDefaultMonospacedFontName(), 26.00f, Font::plain).withTypefaceStyle ("Regular"));
@@ -21,34 +49,6 @@ MainContentComponent::MainContentComponent()
     lbl_version.setColour (TextEditor::textColourId, Colours::black);
     lbl_version.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
     
-    addAndMakeVisible (sl_order);
-    sl_order.setRange (7, 24, 1);
-    sl_order.setSliderStyle (Slider::IncDecButtons);
-    sl_order.setTextBoxStyle (Slider::TextBoxLeft, false, 60, 20);
-    sl_order.addListener (this);
-    addAndMakeVisible (lbl_order);
-    lbl_order.setText("Swept-Sine Order", dontSendNotification);
-    lbl_order.setFont (Font (Font::getDefaultMonospacedFontName(), 15.00f, Font::plain).withTypefaceStyle ("Regular"));
-    lbl_order.setJustificationType (Justification::centredLeft);
-    lbl_order.setEditable (false, false, false);
-    lbl_order.setColour (TextEditor::textColourId, Colours::black);
-    lbl_order.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
-    lbl_order.attachToComponent(&sl_order, true);
-    
-    addAndMakeVisible (sl_repeat);
-    sl_repeat.setRange (1, 8, 1);
-    sl_repeat.setSliderStyle (Slider::IncDecButtons);
-    sl_repeat.setTextBoxStyle (Slider::TextBoxLeft, false, 60, 20);
-    sl_repeat.addListener (this);
-    addAndMakeVisible (lbl_repeat);
-    lbl_repeat.setText("Repeat", dontSendNotification);
-    lbl_repeat.setFont (Font (Font::getDefaultMonospacedFontName(), 15.00f, Font::plain).withTypefaceStyle ("Regular"));
-    lbl_repeat.setJustificationType (Justification::centredLeft);
-    lbl_repeat.setEditable (false, false, false);
-    lbl_repeat.setColour (TextEditor::textColourId, Colours::black);
-    lbl_repeat.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
-    lbl_repeat.attachToComponent(&sl_repeat, true);
-    
     addAndMakeVisible (sl_preSilence);
     sl_preSilence.setRange (0, 20, 0.5);
     sl_preSilence.setSliderStyle (Slider::IncDecButtons);
@@ -62,6 +62,20 @@ MainContentComponent::MainContentComponent()
     lbl_preSilence.setColour (TextEditor::textColourId, Colours::black);
     lbl_preSilence.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
     lbl_preSilence.attachToComponent(&sl_preSilence, true);
+    
+    addAndMakeVisible (sl_duration);
+    sl_duration.setRange (3, 20, 1);
+    sl_duration.setSliderStyle (Slider::IncDecButtons);
+    sl_duration.setTextBoxStyle (Slider::TextBoxLeft, false, 60, 20);
+    sl_duration.addListener (this);
+    addAndMakeVisible (lbl_duration);
+    lbl_duration.setText("Duration(sec)", dontSendNotification);
+    lbl_duration.setFont (Font (Font::getDefaultMonospacedFontName(), 15.00f, Font::plain).withTypefaceStyle ("Regular"));
+    lbl_duration.setJustificationType (Justification::centredLeft);
+    lbl_duration.setEditable (false, false, false);
+    lbl_duration.setColour (TextEditor::textColourId, Colours::black);
+    lbl_duration.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
+    lbl_duration.attachToComponent(&sl_duration, true);
     
     addAndMakeVisible (btn_calib);
     btn_calib.setButtonText (TRANS("Calibrate Latency"));
@@ -90,11 +104,9 @@ MainContentComponent::MainContentComponent()
     auto userSettings = appProperties->getUserSettings();
     ScopedPointer<XmlElement> savedAudioState (userSettings->getXmlValue ("audioDeviceState"));//オーディオインターフェースの設定
     ScopedPointer<XmlElement> savedParameter (userSettings->getXmlValue("parameterSettings"));//パラメータの設定
-    const int odr = savedParameter && savedParameter->hasAttribute("order") ? savedParameter->getIntAttribute("order") : 16;
-    const int rept = savedParameter && savedParameter->hasAttribute("repeat") ? savedParameter->getIntAttribute("repeat") : 5;
+    const double duration = savedParameter && savedParameter->hasAttribute("duration") ? savedParameter->getDoubleAttribute("duration") : 3.0;
     const double silnce = savedParameter && savedParameter->hasAttribute("preSilence") ? savedParameter->getDoubleAttribute("preSilence") : 1.5;
-    sl_order.setValue(odr, dontSendNotification);
-    sl_repeat.setValue(rept, dontSendNotification);
+    sl_duration.setValue(duration, dontSendNotification);
     sl_preSilence.setValue(silnce, dontSendNotification);
     setAudioChannels (1, 1, savedAudioState);
     deviceManager.addAudioCallback(&sweptSinePlayer);
@@ -155,25 +167,24 @@ void MainContentComponent::paint (Graphics& g)
 
 void MainContentComponent::resized()
 {
-    lbl_appName.setBounds (10, 11, 170, 24);
-    lbl_version.setBounds (153, 14, 90, 24);
-    sl_order.setBounds (160, 54, 150, 24);
-    sl_repeat.setBounds (160, 86, 150, 24);
-    sl_preSilence.setBounds (160, 118, 150, 24);
-    btn_calib.setBounds (10, 161, 140, 28);
-    lbl_latency.setBounds (151, 163, 150, 24);
-    btn_measure.setBounds (10, 212, 140, 28);
+    lbl_appName.setBounds (5, 7, 170, 24);
+    lbl_version.setBounds (153, 11, 90, 24);
+    sl_freqRange.minNumberBox.setBounds (10, 50, 80, 20);
+    sl_freqRange.maxNumberBox.setBounds (310, 50, 80, 20);
+    sl_freqRange.range.setBounds (10, 72, 380, 30);
+    sl_duration.setBounds(142, 104, 150, 24);
+    sl_preSilence.setBounds (142, 133, 150, 24);
+    btn_calib.setBounds (10, 175, 140, 28);
+    lbl_latency.setBounds (151, 180, 150, 24);
+    btn_measure.setBounds (10, 215, 140, 28);
 }
 
 //==============================================================================
 void MainContentComponent::sliderValueChanged (Slider* slider)
 {
-    if (slider == &sl_order)
+    if(slider == &sl_duration)
     {
-        generateSweptSine(sl_order.getValue());
-    }
-    else if (slider == &sl_repeat)
-    {
+        
     }
     else if (slider == &sl_preSilence)
     {
@@ -182,9 +193,8 @@ void MainContentComponent::sliderValueChanged (Slider* slider)
     //スライダーの値をXMLで保存
     String xmltag =  "parameter";
     ScopedPointer<XmlElement> parameterSettings = new XmlElement(xmltag);
-    parameterSettings->setAttribute("order", (int)sl_order.getValue());
-    parameterSettings->setAttribute("repeat", (int)sl_repeat.getValue());
     parameterSettings->setAttribute("preSilence", sl_preSilence.getValue());
+    parameterSettings->setAttribute("duration", sl_duration.getValue());
     appProperties->getUserSettings()->setValue ("parameterSettings", parameterSettings);
     appProperties->getUserSettings()->saveIfNeeded();
 }

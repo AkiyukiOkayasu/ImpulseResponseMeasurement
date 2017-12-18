@@ -49,14 +49,21 @@ private:
     measurementState measureState = measurementState::stopped;
     AudioFormatManager formatManager;
     SoundPlayer sweptSinePlayer;
-    Slider sl_order;
-    Label lbl_order;
+    struct RangeSlider{
+        Slider range;
+        Slider minNumberBox,maxNumberBox;
+        Value minSharedValue{20.0};
+        Value maxSharedValue{20000.0};
+    };
+    
+    
+    RangeSlider sl_freqRange;
     Label lbl_appName;
     Label lbl_version;
-    Label lbl_repeat;
-    Slider sl_repeat;
     Label lbl_preSilence;
     Slider sl_preSilence;
+    Label lbl_duration;
+    Slider sl_duration;
     TextButton btn_measure;
     TextButton btn_calib;
     Label lbl_latency;
