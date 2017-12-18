@@ -256,42 +256,45 @@ void MainContentComponent::generateSweptSine(const double freqBegin, const doubl
     }
 }
 
-void MainContentComponent::computeIR(const int order)
+void MainContentComponent::computeIR()
 {
-    const int N = pow(2, order);//SweptSineP信号長
-    const int FFTOrder = order + 1;//円状畳み込みを直線上畳み込みと同等にするために2N分のFFTサイズを確保する
+    const int N = buf_recordedSweptSine.getNumSamples();//0埋めした後のSweptSineP信号長
+    const int FFTOrder = log2(2 * N);//円状畳み込みを直線上畳み込みと同等にするために2N分のFFTサイズを確保する
+    buf_IR.clear();
+    buf_IR.setSize(1, N);
     dsp::FFT fft(FFTOrder);
     std::vector<std::complex<float>> H(2*N, std::complex<float>(0.0f, 0.0f));//SweptSine信号
     std::vector<std::complex<float>> invH(2*N, std::complex<float>(0.0f, 0.0f));//逆フィルタ
-    
+
     std::string timeStamp = getTimeStamp();
     exportWav(buf_recordedSweptSine, timeStamp + "_recordedSweptSine.wav");
-    for(int i = 0; i < N; ++i)
+    jassert(buf_recordedSweptSine.getNumSamples() == buf_inverseFilter.getNumSamples());
+    for(int i = 0; i < buf_recordedSweptSine.getNumSamples(); ++i)
     {
         H.at(i).real(buf_recordedSweptSine.getSample(0, i));
         invH.at(i).real(buf_inverseFilter.getSample(0, i));
     }
     fft.perform(H.data(), H.data(), false);
     fft.perform(invH.data(), invH.data(), false);
-    
+
     for(int i = 0; i < 2*N; ++i)
     {
         H.at(i) *= invH.at(i);
     }
-    
+
     fft.perform(H.data(), H.data(), true);
-    
+
     const int offset = N;//円状畳み込みのオフセット(後半のみ取り出す)
     for (int i = 0; i < N; ++i)
     {
         const int index = i + offset;
         buf_IR.setSample(0, i, H.at(index).real());
     }
-    
+
     //ノーマライズ
     double normalizeFactor = 1.0 / buf_IR.getMagnitude(0, buf_IR.getNumSamples());
     buf_IR.applyGain(normalizeFactor);
-    
+
     exportWav(buf_IR, timeStamp + "_ImpulseResponse.wav");
     measureState = measurementState::stopped;
 }
