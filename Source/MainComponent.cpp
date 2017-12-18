@@ -224,60 +224,26 @@ void MainContentComponent::menuItemSelected(int menuItemID, int topLevelMenuInde
     if (menuItemID == 1) showAudioSettings();
 }
 
-void MainContentComponent::generateSweptSine(const int order)
+void MainContentComponent::generateSweptSine(const double freqBegin, const double freqEnd, const double duration)
 {
-    dsp::FFT fft(order);
-    const int N = pow(2, order);//SweptSine信号長
-    const int J = N / 4;//SweptSine実行長
-    const double alpha = 2.0 * double_Pi * (double)J;
-    buf_sweptSine.clear();
-    buf_sweptSine.setSize(1, N);
-    buf_inverseFilter.clear();
-    buf_inverseFilter.setSize(1, N);
-    buf_recordedSweptSine.clear();
-    buf_recordedSweptSine.setSize(1, N);
-    buf_IR.clear();
-    buf_IR.setSize(1, N);
-    std::vector<std::complex<float>> H(N);//SweptSine信号
-    std::vector<std::complex<float>> invH(N);//逆フィルタ
+    const double sampleRate = deviceManager.getCurrentAudioDevice()->getCurrentSampleRate();
+    const int lengthInSamples = duration * sampleRate;
+    buf_sweptSine.setSize(1, lengthInSamples);
+    buf_inverseFilter.setSize(1, lengthInSamples);
     
-    for (int i = 0; i < N; ++i)
+    const double alpha = (2.0 * double_Pi * freqBegin * duration) / log(freqEnd / freqBegin);
+    const double invFilterGainCoefficient = (-6.0 * log2(freqEnd / freqBegin));
+    for(int i = 0; i < lengthInSamples; ++i)
     {
-        if(i <= N / 2)
-        {
-            //SweptSine信号
-            H[i].real(0.0);
-            H[i].imag(-1.0 * alpha * pow((double)i / (double)N, 2.0));
-            H[i] = std::exp(H[i]);
-            //逆フィルタ
-            invH[i].real(0.0);
-            invH[i].imag(1.0 * alpha * pow((double)i / (double)N, 2.0));
-            invH[i] = std::exp(invH[i]);
-        }
-        else
-        {
-            H[i] = std::conj(H[N - i]);
-            invH[i] = std::conj(invH[N - i]);
-        }
+        double tESS = (double)i / sampleRate;
+        double vESS = sin(alpha * exp((tESS / duration) * log(freqEnd / freqBegin)) - 1.0);
+        buf_sweptSine.setSample(0, i, vESS);
+        
+        double gainInvFilter = Decibels::decibelsToGain(invFilterGainCoefficient * (i / (double)lengthInSamples));
+        double tInvFilter = (double)(lengthInSamples - (i + 1)) / sampleRate;
+        double vInvFilter = sin(alpha * exp((tInvFilter / duration) * log(freqEnd / freqBegin)) - 1.0)  * gainInvFilter;
+        buf_inverseFilter.setSample(0, i, vInvFilter);
     }
-    //逆FFT
-    fft.perform(H.data() , H.data(), true);
-    fft.perform(invH.data(), invH.data(), true);
-    //円状シフト
-    const int roll = (N - J) / 2;
-    std::rotate(H.rbegin(), H.rbegin() + roll, H.rend());
-    std::rotate(invH.begin(), invH.begin() + roll, invH.end());
-    
-    for (int i = 0; i < N; ++i)
-    {
-        buf_sweptSine.setSample(0, i, H[i].real());
-        buf_inverseFilter.setSample(0, i, invH[i].real());
-    }
-    
-    //ノーマライズ
-    double normalizeFactor = 0.97 / buf_sweptSine.getMagnitude(0, buf_sweptSine.getNumSamples());
-    buf_sweptSine.applyGain(normalizeFactor);
-    buf_inverseFilter.applyGain(normalizeFactor);
 }
 
 void MainContentComponent::computeIR(const int order)
