@@ -121,7 +121,7 @@ MainContentComponent::~MainContentComponent()
 //==============================================================================
 void MainContentComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
-    generateSweptSine(sl_order.getValue());
+    generateSweptSine(sl_freqRange.minSharedValue.getValue(), sl_freqRange.maxSharedValue.getValue(), sl_duration.getValue());
 }
 
 void MainContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& bufferToFill)
@@ -206,8 +206,8 @@ void MainContentComponent::buttonClicked (Button* button)
         const int size = buf_sweptSine.getNumSamples();
         buf_recordedSweptSine.clear();
         buf_recordedSweptSine.setSize(1, size);
-        buf_IR.clear();
-        buf_IR.setSize(1, size);
+//        buf_IR.clear();
+//        buf_IR.setSize(1, size);
         measureState = measurementState::starting;
         sweptSinePlayer.play(&buf_sweptSine, false, true);
     }
