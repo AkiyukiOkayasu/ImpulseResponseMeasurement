@@ -246,12 +246,12 @@ void MainContentComponent::generateSweptSine(const double freqBegin, const doubl
     for(int i = 0; i < lengthInSamples; ++i)
     {
         double tESS = (double)i / sampleRate;
-        double vESS = sin(alpha * exp((tESS / duration) * log(freqEnd / freqBegin)) - 1.0);
+        double vESS = sin(alpha * (exp((tESS / duration) * log(freqEnd / freqBegin)) - 1.0));
         buf_sweptSine.setSample(0, i, vESS);
         
         double gainInvFilter = Decibels::decibelsToGain(invFilterGainCoefficient * (i / (double)lengthInSamples));
         double tInvFilter = (double)(lengthInSamples - (i + 1)) / sampleRate;
-        double vInvFilter = sin(alpha * exp((tInvFilter / duration) * log(freqEnd / freqBegin)) - 1.0)  * gainInvFilter;
+        double vInvFilter = sin(alpha * (exp((tInvFilter / duration) * log(freqEnd / freqBegin)) - 1.0))  * gainInvFilter;
         buf_inverseFilter.setSample(0, i, vInvFilter);
     }
 }
