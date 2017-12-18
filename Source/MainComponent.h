@@ -62,6 +62,8 @@ private:
     Label lbl_version;
     Label lbl_preSilence;
     Slider sl_preSilence;
+    Label lbl_postSilence;
+    Slider sl_postSilence;
     Label lbl_duration;
     Slider sl_duration;
     TextButton btn_measure;

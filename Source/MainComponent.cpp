@@ -63,6 +63,20 @@ MainContentComponent::MainContentComponent()
     lbl_preSilence.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
     lbl_preSilence.attachToComponent(&sl_preSilence, true);
     
+    addAndMakeVisible (sl_postSilence);
+    sl_postSilence.setRange (0, 20, 0.5);
+    sl_postSilence.setSliderStyle (Slider::IncDecButtons);
+    sl_postSilence.setTextBoxStyle (Slider::TextBoxLeft, false, 60, 20);
+    sl_postSilence.addListener (this);
+    addAndMakeVisible (lbl_postSilence);
+    lbl_postSilence.setText("Minimum post Silence(sec)", dontSendNotification);
+    lbl_postSilence.setFont (Font (Font::getDefaultMonospacedFontName(), 15.00f, Font::plain).withTypefaceStyle ("Regular"));
+    lbl_postSilence.setJustificationType (Justification::centredLeft);
+    lbl_postSilence.setEditable (false, false, false);
+    lbl_postSilence.setColour (TextEditor::textColourId, Colours::black);
+    lbl_postSilence.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
+    lbl_postSilence.attachToComponent(&sl_postSilence, true);
+    
     addAndMakeVisible (sl_duration);
     sl_duration.setRange (1, 20, 1);
     sl_duration.setSliderStyle (Slider::IncDecButtons);
@@ -92,7 +106,7 @@ MainContentComponent::MainContentComponent()
     btn_measure.setButtonText (TRANS("Start Measurement"));
     btn_measure.addListener (this);
     
-    setSize (400, 260);
+    setSize (400, 280);
     
     //保存したパラメータをXMLファイルから呼び出し
     PropertiesFile::Options options;
@@ -169,14 +183,15 @@ void MainContentComponent::resized()
 {
     lbl_appName.setBounds (5, 7, 170, 24);
     lbl_version.setBounds (153, 11, 90, 24);
-    sl_freqRange.minNumberBox.setBounds (10, 50, 80, 20);
-    sl_freqRange.maxNumberBox.setBounds (310, 50, 80, 20);
-    sl_freqRange.range.setBounds (10, 72, 380, 30);
-    sl_duration.setBounds(142, 104, 150, 24);
-    sl_preSilence.setBounds (142, 133, 150, 24);
-    btn_calib.setBounds (10, 175, 140, 28);
-    lbl_latency.setBounds (151, 180, 150, 24);
-    btn_measure.setBounds (10, 215, 140, 28);
+    sl_freqRange.minNumberBox.setBounds (10, 40, 70, 24);
+    sl_freqRange.maxNumberBox.setBounds (310, 40, 70, 24);
+    sl_freqRange.range.setBounds (10, 66, 380, 30);
+    sl_duration.setBounds(255, 104, 130, 24);
+    sl_preSilence.setBounds (255, 133, 130, 24);
+    sl_postSilence.setBounds(255, 162, 130, 24);
+    btn_calib.setBounds (10, 205, 140, 28);
+    lbl_latency.setBounds (151, 205, 150, 24);
+    btn_measure.setBounds (10, 240, 140, 28);
 }
 
 //==============================================================================
