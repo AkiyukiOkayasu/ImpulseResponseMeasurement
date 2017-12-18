@@ -64,7 +64,7 @@ MainContentComponent::MainContentComponent()
     lbl_preSilence.attachToComponent(&sl_preSilence, true);
     
     addAndMakeVisible (sl_duration);
-    sl_duration.setRange (3, 20, 1);
+    sl_duration.setRange (1, 20, 1);
     sl_duration.setSliderStyle (Slider::IncDecButtons);
     sl_duration.setTextBoxStyle (Slider::TextBoxLeft, false, 60, 20);
     sl_duration.addListener (this);
@@ -206,8 +206,8 @@ void MainContentComponent::buttonClicked (Button* button)
         const int size = buf_sweptSine.getNumSamples();
         buf_recordedSweptSine.clear();
         buf_recordedSweptSine.setSize(1, size);
-//        buf_IR.clear();
-//        buf_IR.setSize(1, size);
+        buf_IR.clear();
+        buf_IR.setSize(1, size);
         measureState = measurementState::starting;
         sweptSinePlayer.play(&buf_sweptSine, false, true);
     }
@@ -258,10 +258,10 @@ void MainContentComponent::generateSweptSine(const double freqBegin, const doubl
 
 void MainContentComponent::computeIR()
 {
-    const int N = buf_recordedSweptSine.getNumSamples();//0埋めした後のSweptSineP信号長
-    const int FFTOrder = log2(2 * N);//円状畳み込みを直線上畳み込みと同等にするために2N分のFFTサイズを確保する
+    const int N = nextpow2(buf_recordedSweptSine.getNumSamples());//0埋め後のESS信号長
+    const int FFTOrder = log2(2*N);//円状畳み込みを直線上畳み込みと同等にするために2N分のFFTサイズを確保する
     buf_IR.clear();
-    buf_IR.setSize(1, N);
+    buf_IR.setSize(1, 2*N);
     dsp::FFT fft(FFTOrder);
     std::vector<std::complex<float>> H(2*N, std::complex<float>(0.0f, 0.0f));//SweptSine信号
     std::vector<std::complex<float>> invH(2*N, std::complex<float>(0.0f, 0.0f));//逆フィルタ
@@ -271,9 +271,10 @@ void MainContentComponent::computeIR()
     jassert(buf_recordedSweptSine.getNumSamples() == buf_inverseFilter.getNumSamples());
     for(int i = 0; i < buf_recordedSweptSine.getNumSamples(); ++i)
     {
-        H.at(i).real(buf_recordedSweptSine.getSample(0, i));
-        invH.at(i).real(buf_inverseFilter.getSample(0, i));
+        H.at(i + N).real(buf_recordedSweptSine.getSample(0, i));
+        invH.at(i + N).real(buf_inverseFilter.getSample(0, i));
     }
+    
     fft.perform(H.data(), H.data(), false);
     fft.perform(invH.data(), invH.data(), false);
 
@@ -284,13 +285,12 @@ void MainContentComponent::computeIR()
 
     fft.perform(H.data(), H.data(), true);
 
-    const int offset = N;//円状畳み込みのオフセット(後半のみ取り出す)
-    for (int i = 0; i < N; ++i)
+    for (int i = 0; i < 2*N; ++i)
     {
-        const int index = i + offset;
-        buf_IR.setSample(0, i, H.at(index).real());
+        buf_IR.setSample(0, i, H.at(i).real());
     }
 
+    exportWav(buf_IR, "nonNormarizedIR.wav");
     //ノーマライズ
     double normalizeFactor = 1.0 / buf_IR.getMagnitude(0, buf_IR.getNumSamples());
     buf_IR.applyGain(normalizeFactor);
