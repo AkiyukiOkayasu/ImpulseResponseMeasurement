@@ -41,7 +41,7 @@
 namespace ProjectInfo
 {
     const char* const  projectName    = "ImpulseResponseMeasurement";
-    const char* const  versionString  = "0.1.0";
-    const int          versionNumber  = 0x100;
+    const char* const  versionString  = "0.2.0";
+    const int          versionNumber  = 0x200;
 }
 #endif
