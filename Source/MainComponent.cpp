@@ -7,7 +7,7 @@ MainContentComponent::MainContentComponent()
     
     addAndMakeVisible(sl_freqRange.range);
     sl_freqRange.range.setRange (1, 20000, 1);
-    sl_freqRange.range.setSkewFactorFromMidPoint(4000.0);
+    sl_freqRange.range.setSkewFactorFromMidPoint(2500.0);
     sl_freqRange.range.setSliderStyle (Slider::TwoValueHorizontal);
     sl_freqRange.range.setTextBoxStyle (Slider::NoTextBox, true, 80, 20);
     sl_freqRange.range.setColour (Slider::thumbColourId, Colours::aqua);
@@ -141,7 +141,7 @@ void MainContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& buff
                 if (recordIndex >= buf_recordedSweptSine.getNumSamples())
                 {
                     measureState = measurementState::computingIR;
-                    computeIR(sl_order.getValue());
+                    computeIR();
                     break;
                 }
                 
@@ -182,9 +182,9 @@ void MainContentComponent::resized()
 //==============================================================================
 void MainContentComponent::sliderValueChanged (Slider* slider)
 {
-    if(slider == &sl_duration)
+    if(slider == &sl_freqRange.range || slider == &sl_freqRange.minNumberBox || slider == &sl_freqRange.maxNumberBox || slider == &sl_duration)
     {
-        
+        generateSweptSine(sl_freqRange.minSharedValue.getValue(), sl_freqRange.maxSharedValue.getValue(), sl_duration.getValue());
     }
     else if (slider == &sl_preSilence)
     {
