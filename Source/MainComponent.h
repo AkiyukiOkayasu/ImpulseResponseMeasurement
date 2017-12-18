@@ -38,6 +38,7 @@ private:
     void generateSweptSine(const double freqBegin, const double freqEnd, const double duration);
     void exportWav(AudioSampleBuffer &bufferToWrite, String fileName);
     std::string getTimeStamp();
+    int nextpow2(int n);
     
     enum class measurementState {
         stopped,

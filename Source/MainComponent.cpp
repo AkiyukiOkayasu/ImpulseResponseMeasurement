@@ -336,3 +336,9 @@ std::string MainContentComponent::getTimeStamp()
     ss << std::put_time(localtime(&now_c), "%Y%m%d_%H%M%S");
     return ss.str();
 }
+
+int MainContentComponent::nextpow2(int n)
+{
+    //nより大きい最小の2のべき乗の数を求める
+    return (int)pow(2.0, (floor(log2(n - 1) + 1.0)));
+}
