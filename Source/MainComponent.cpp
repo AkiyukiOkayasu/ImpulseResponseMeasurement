@@ -137,7 +137,7 @@ MainContentComponent::~MainContentComponent()
 //==============================================================================
 void MainContentComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
-    generateSweptSine(sl_freqRange.minSharedValue.getValue(), sl_freqRange.maxSharedValue.getValue(), sl_duration.getValue());
+    generateSweptSine(sl_freqRange.minSharedValue.getValue(), sl_freqRange.maxSharedValue.getValue(), sl_duration.getValue(), sl_postSilence.getValue());
 }
 
 void MainContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& bufferToFill)
@@ -201,7 +201,7 @@ void MainContentComponent::sliderValueChanged (Slider* slider)
 {
     if(slider == &sl_freqRange.range || slider == &sl_freqRange.minNumberBox || slider == &sl_freqRange.maxNumberBox || slider == &sl_duration)
     {
-        generateSweptSine(sl_freqRange.minSharedValue.getValue(), sl_freqRange.maxSharedValue.getValue(), sl_duration.getValue());
+        generateSweptSine(sl_freqRange.minSharedValue.getValue(), sl_freqRange.maxSharedValue.getValue(), sl_duration.getValue(), sl_postSilence.getValue());
     }
     else if (slider == &sl_preSilence)
     {
@@ -252,31 +252,34 @@ void MainContentComponent::menuItemSelected(int menuItemID, int topLevelMenuInde
     if (menuItemID == 1) showAudioSettings();
 }
 
-void MainContentComponent::generateSweptSine(const double freqBegin, const double freqEnd, const double duration)
+void MainContentComponent::generateSweptSine(const double freqBegin, const double freqEnd, const double sweptSineDuration, const double postSilenceDuration)
 {
     const double sampleRate = deviceManager.getCurrentAudioDevice()->getCurrentSampleRate();
-    const int lengthInSamples = duration * sampleRate;
-    buf_sweptSine.setSize(1, lengthInSamples);
-    buf_inverseFilter.setSize(1, lengthInSamples);
+    const int sweptSineLengthInSamples = sweptSineDuration * sampleRate;
+    const int totalLengthInSamples = nextpow2(sweptSineLengthInSamples + (postSilenceDuration * sampleRate));//無音も含めた全体のサンプル数
+    buf_sweptSine.clear();
+    buf_sweptSine.setSize(1, totalLengthInSamples);
+    buf_inverseFilter.clear();
+    buf_inverseFilter.setSize(1, totalLengthInSamples);
     
-    const double alpha = (2.0 * double_Pi * freqBegin * duration) / log(freqEnd / freqBegin);
+    const double alpha = (2.0 * double_Pi * freqBegin * sweptSineDuration) / log(freqEnd / freqBegin);
     const double invFilterGainCoefficient = (-6.0 * log2(freqEnd / freqBegin));
-    for(int i = 0; i < lengthInSamples; ++i)
+    for(int i = 0; i < sweptSineLengthInSamples; ++i)
     {
         double tESS = (double)i / sampleRate;
-        double vESS = sin(alpha * (exp((tESS / duration) * log(freqEnd / freqBegin)) - 1.0));
+        double vESS = sin(alpha * (exp((tESS / sweptSineDuration) * log(freqEnd / freqBegin)) - 1.0));
         buf_sweptSine.setSample(0, i, vESS);
         
-        double gainInvFilter = Decibels::decibelsToGain(invFilterGainCoefficient * (i / (double)lengthInSamples));
-        double tInvFilter = (double)(lengthInSamples - (i + 1)) / sampleRate;
-        double vInvFilter = sin(alpha * (exp((tInvFilter / duration) * log(freqEnd / freqBegin)) - 1.0))  * gainInvFilter;
+        double gainInvFilter = Decibels::decibelsToGain(invFilterGainCoefficient * (i / (double)sweptSineLengthInSamples));
+        double tInvFilter = (double)(sweptSineLengthInSamples - (i + 1)) / sampleRate;
+        double vInvFilter = sin(alpha * (exp((tInvFilter / sweptSineDuration) * log(freqEnd / freqBegin)) - 1.0))  * gainInvFilter;
         buf_inverseFilter.setSample(0, i, vInvFilter);
     }
 }
 
 void MainContentComponent::computeIR()
 {
-    const int N = nextpow2(buf_recordedSweptSine.getNumSamples());//0埋め後のESS信号長
+    const int N = buf_recordedSweptSine.getNumSamples();//0埋め後のESS信号長
     const int FFTOrder = log2(2*N);//円状畳み込みを直線上畳み込みと同等にするために2N分のFFTサイズを確保する
     buf_IR.clear();
     buf_IR.setSize(1, 2*N);

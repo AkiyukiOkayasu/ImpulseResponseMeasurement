@@ -34,7 +34,7 @@ public:
     void showAudioSettings();
     
 private:
-    void generateSweptSine(const double freqBegin, const double freqEnd, const double duration);
+    void generateSweptSine(const double freqBegin, const double freqEnd, const double sweptSineDuration, const double postSilenceDuration);
     void computeIR();
     void exportWav(AudioSampleBuffer &bufferToWrite, String fileName);
     std::string getTimeStamp();
