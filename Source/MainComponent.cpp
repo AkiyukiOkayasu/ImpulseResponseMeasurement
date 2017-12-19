@@ -151,13 +151,19 @@ void MainContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& buff
     switch (measureState)
     {
         case measurementState::stopped:
+        {
             bufferToFill.clearActiveBufferRegion();
             break;
+        }
         case measurementState::starting:
+        {
             recordIndex = 0;
             measureState = measurementState::started;
             break;
+        }
         case measurementState::started:
+        {
+            auto** recordESSArray = buf_recordedSweptSine.getArrayOfWritePointers();
             for (int sample = 0; sample < bufferToFill.buffer->getNumSamples(); ++sample)
             {
                 if (recordIndex >= buf_recordedSweptSine.getNumSamples())
@@ -168,13 +174,16 @@ void MainContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& buff
                 }
                 
                 for(int channel = 0; channel < bufferToFill.buffer->getNumChannels(); ++channel) {
-                    buf_recordedSweptSine.setSample(channel, recordIndex, bufferToFill.buffer->getSample(channel, sample));
+                    recordESSArray[channel][recordIndex] = bufferToFill.buffer->getSample(channel, sample);
                 }
                 recordIndex++;
             }
             break;
+        }
         case measurementState::computingIR:
+        {
             break;
+        }
     }
     bufferToFill.clearActiveBufferRegion();
 }
@@ -273,16 +282,18 @@ void MainContentComponent::generateSweptSine(const double freqBegin, const doubl
     
     const double alpha = (2.0 * double_Pi * freqBegin * sweptSineDuration) / log(freqEnd / freqBegin);
     const double invFilterGainCoefficient = (-6.0 * log2(freqEnd / freqBegin));
-    for(int i = 0; i < sweptSineLengthInSamples; ++i)
+    auto* ESSArray = buf_sweptSine.getWritePointer(0);
+    auto* inverseFilterArray = buf_inverseFilter.getWritePointer(0);
+    for(long i = 0; i < sweptSineLengthInSamples; ++i)
     {
         double tESS = (double)i / sampleRate;
         double vESS = sin(alpha * (exp((tESS / sweptSineDuration) * log(freqEnd / freqBegin)) - 1.0));
-        buf_sweptSine.setSample(0, i, vESS);
+        ESSArray[i] = vESS;
         
         double gainInvFilter = Decibels::decibelsToGain(invFilterGainCoefficient * (i / (double)sweptSineLengthInSamples));
         double tInvFilter = (double)(sweptSineLengthInSamples - (i + 1)) / sampleRate;
         double vInvFilter = sin(alpha * (exp((tInvFilter / sweptSineDuration) * log(freqEnd / freqBegin)) - 1.0))  * gainInvFilter;
-        buf_inverseFilter.setSample(0, i, vInvFilter);
+        inverseFilterArray[i] = vInvFilter;
     }
 }
 
@@ -301,23 +312,26 @@ void MainContentComponent::computeIR()
     {
         std::vector<std::complex<float>> H(2*N, std::complex<float>(0.0f, 0.0f));//SweptSine信号
         std::vector<std::complex<float>> invH(2*N, std::complex<float>(0.0f, 0.0f));//逆フィルタ
-        for(int i = 0; i < buf_recordedSweptSine.getNumSamples(); ++i)
+        auto** recordESSArray = buf_recordedSweptSine.getArrayOfWritePointers();
+        auto* inverseFilterArray = buf_inverseFilter.getWritePointer(0);
+        for(long i = 0; i < buf_recordedSweptSine.getNumSamples(); ++i)
         {
-            H.at(i + N).real(buf_recordedSweptSine.getSample(channel, i));
-            invH.at(i + N).real(buf_inverseFilter.getSample(0, i));
+            H.at(i + N).real(recordESSArray[channel][i]);
+            invH.at(i + N).real(inverseFilterArray[i]);
         }
         
         fft.perform(H.data(), H.data(), false);
         fft.perform(invH.data(), invH.data(), false);
         
-        for(int i = 0; i < 2*N; ++i) {
+        for(long i = 0; i < 2*N; ++i) {
             H.at(i) *= invH.at(i);
         }
         
         fft.perform(H.data(), H.data(), true);
         
-        for (int i = 0; i < 2*N; ++i) {
-            buf_IR.setSample(channel, i, H.at(i).real());
+        auto** IRArray = buf_IR.getArrayOfWritePointers();
+        for (long i = 0; i < 2*N; ++i) {
+            IRArray[channel][i] = H.at(i).real();
         }
     }
 
