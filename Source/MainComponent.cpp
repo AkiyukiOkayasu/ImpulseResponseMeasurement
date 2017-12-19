@@ -50,7 +50,7 @@ MainContentComponent::MainContentComponent()
     lbl_version.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
     
     addAndMakeVisible (sl_preSilence);
-    sl_preSilence.setRange (0, 20, 0.5);
+    sl_preSilence.setRange (0, 30, 1);
     sl_preSilence.setSliderStyle (Slider::IncDecButtons);
     sl_preSilence.setTextBoxStyle (Slider::TextBoxLeft, false, 60, 20);
     sl_preSilence.addListener (this);
@@ -64,7 +64,7 @@ MainContentComponent::MainContentComponent()
     lbl_preSilence.attachToComponent(&sl_preSilence, true);
     
     addAndMakeVisible (sl_postSilence);
-    sl_postSilence.setRange (0, 20, 0.5);
+    sl_postSilence.setRange (0, 30, 1);
     sl_postSilence.setSliderStyle (Slider::IncDecButtons);
     sl_postSilence.setTextBoxStyle (Slider::TextBoxLeft, false, 60, 20);
     sl_postSilence.addListener (this);
@@ -78,7 +78,7 @@ MainContentComponent::MainContentComponent()
     lbl_postSilence.attachToComponent(&sl_postSilence, true);
     
     addAndMakeVisible (sl_duration);
-    sl_duration.setRange (1, 20, 1);
+    sl_duration.setRange (5, 180, 5);
     sl_duration.setSliderStyle (Slider::IncDecButtons);
     sl_duration.setTextBoxStyle (Slider::TextBoxLeft, false, 60, 20);
     sl_duration.addListener (this);
@@ -118,9 +118,9 @@ MainContentComponent::MainContentComponent()
     auto userSettings = appProperties->getUserSettings();
     ScopedPointer<XmlElement> savedAudioState (userSettings->getXmlValue ("audioDeviceState"));//オーディオインターフェースの設定
     ScopedPointer<XmlElement> savedParameter (userSettings->getXmlValue("parameterSettings"));//パラメータの設定
-    const double duration = savedParameter && savedParameter->hasAttribute("duration") ? savedParameter->getDoubleAttribute("duration") : 3.0;
-    const double preSilnce = savedParameter && savedParameter->hasAttribute("preSilence") ? savedParameter->getDoubleAttribute("preSilence") : 1.5;
-    const double postSilnce = savedParameter && savedParameter->hasAttribute("postSilence") ? savedParameter->getDoubleAttribute("postSilence") : 2.5;
+    const double duration = savedParameter && savedParameter->hasAttribute("duration") ? savedParameter->getDoubleAttribute("duration") : 5.0;
+    const double preSilnce = savedParameter && savedParameter->hasAttribute("preSilence") ? savedParameter->getDoubleAttribute("preSilence") : 2.0;
+    const double postSilnce = savedParameter && savedParameter->hasAttribute("postSilence") ? savedParameter->getDoubleAttribute("postSilence") : 3.0;
     sl_duration.setValue(duration, dontSendNotification);
     sl_preSilence.setValue(preSilnce, dontSendNotification);
     sl_postSilence.setValue(postSilnce, dontSendNotification);
