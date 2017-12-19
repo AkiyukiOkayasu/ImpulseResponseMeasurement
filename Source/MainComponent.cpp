@@ -137,6 +137,12 @@ MainContentComponent::~MainContentComponent()
 //==============================================================================
 void MainContentComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
+    auto freqRange = sl_freqRange.range.getRange();
+    double nyquistFreq = sampleRate / 2.0;
+    freqRange.setEnd(nyquistFreq);
+    sl_freqRange.range.setRange(freqRange, sl_freqRange.range.getInterval());
+    sl_freqRange.minNumberBox.setRange(freqRange, sl_freqRange.minNumberBox.getInterval());
+    sl_freqRange.maxNumberBox.setRange(freqRange, sl_freqRange.maxNumberBox.getInterval());
     generateSweptSine(sl_freqRange.minSharedValue.getValue(), sl_freqRange.maxSharedValue.getValue(), sl_duration.getValue(), sl_postSilence.getValue());
 }
 
