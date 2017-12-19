@@ -377,3 +377,17 @@ int MainContentComponent::nextpow2(int n)
     //nより大きい最小の2のべき乗の数を求める
     return (int)pow(2.0, (floor(log2(n - 1) + 1.0)));
 }
+
+int MainContentComponent::getNumInputChannels()
+{
+    AudioDeviceManager::AudioDeviceSetup deviceSetup;
+    deviceManager.getAudioDeviceSetup(deviceSetup);
+    auto inputChannelInfo = deviceSetup.inputChannels.toString(2);
+    int numInputChannels = 0;
+    for(int i = 0; i < inputChannelInfo.length(); ++i)
+    {
+        if(inputChannelInfo[i] == '1') ++numInputChannels;
+    }
+    std::cout<<"numInputChannels: "<<numInputChannels<<std::endl;
+    return numInputChannels;
+}
