@@ -124,7 +124,7 @@ MainContentComponent::MainContentComponent()
     sl_duration.setValue(duration, dontSendNotification);
     sl_preSilence.setValue(preSilnce, dontSendNotification);
     sl_postSilence.setValue(postSilnce, dontSendNotification);
-    setAudioChannels (1, 1, savedAudioState);
+    setAudioChannels (2, 2, savedAudioState);
     deviceManager.addAudioCallback(&sweptSinePlayer);
 }
 
@@ -332,8 +332,8 @@ void MainContentComponent::exportWav(AudioSampleBuffer &bufferToWrite, String fi
 void MainContentComponent::showAudioSettings()
 {
     AudioDeviceSelectorComponent audioSettingsComp (deviceManager,
-                                                    1, 1,//InputChannels: min/max
-                                                    1, 1,//OutputChannels: min/max
+                                                    1, 2,//InputChannels: min/max
+                                                    1, 2,//OutputChannels: min/max
                                                     false,//Show MIDI input options
                                                     false,//Show MIDI output selector
                                                     false,//Stereo pair
