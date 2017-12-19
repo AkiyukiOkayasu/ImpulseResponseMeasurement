@@ -124,7 +124,7 @@ MainContentComponent::MainContentComponent()
     sl_duration.setValue(duration, dontSendNotification);
     sl_preSilence.setValue(preSilnce, dontSendNotification);
     sl_postSilence.setValue(postSilnce, dontSendNotification);
-    setAudioChannels (2, 2, savedAudioState);
+    setAudioChannels (128, 128, savedAudioState);
     deviceManager.addAudioCallback(&sweptSinePlayer);
 }
 
@@ -167,7 +167,9 @@ void MainContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& buff
                     break;
                 }
                 
-                buf_recordedSweptSine.setSample(0, recordIndex, bufferToFill.buffer->getSample(0, sample));
+                for(int channel = 0; channel < bufferToFill.buffer->getNumChannels(); ++channel) {
+                    buf_recordedSweptSine.setSample(channel, recordIndex, bufferToFill.buffer->getSample(channel, sample));
+                }
                 recordIndex++;
             }
             break;
@@ -228,10 +230,11 @@ void MainContentComponent::buttonClicked (Button* button)
     if (button == &btn_measure)
     {
         const int size = buf_sweptSine.getNumSamples();
+        const int numInputChannels = getNumInputChannels();
         buf_recordedSweptSine.clear();
-        buf_recordedSweptSine.setSize(1, size);
+        buf_recordedSweptSine.setSize(numInputChannels, size);
         buf_IR.clear();
-        buf_IR.setSize(1, size);
+        buf_IR.setSize(numInputChannels, size * 2);
         measureState = measurementState::starting;
         sweptSinePlayer.play(&buf_sweptSine, false, true);
     }
@@ -285,39 +288,42 @@ void MainContentComponent::generateSweptSine(const double freqBegin, const doubl
 
 void MainContentComponent::computeIR()
 {
+    const int numChannels = buf_recordedSweptSine.getNumChannels();
     const int N = buf_recordedSweptSine.getNumSamples();//ESS信号長
     const int FFTOrder = log2(2*N);//周波数領域の畳み込みを直線上畳み込みと同等にするためにFFTサイズは2Nにする
-    buf_IR.clear();
-    buf_IR.setSize(1, N);
     dsp::FFT fft(FFTOrder);
-    std::vector<std::complex<float>> H(2*N, std::complex<float>(0.0f, 0.0f));//SweptSine信号
-    std::vector<std::complex<float>> invH(2*N, std::complex<float>(0.0f, 0.0f));//逆フィルタ
-
-    std::string timeStamp = getTimeStamp();
-    exportWav(buf_recordedSweptSine, timeStamp + "_recordedSweptSine.wav");
     jassert(buf_recordedSweptSine.getNumSamples() == buf_inverseFilter.getNumSamples());
-    for(int i = 0; i < buf_recordedSweptSine.getNumSamples(); ++i)
-    {
-        H.at(i + N).real(buf_recordedSweptSine.getSample(0, i));
-        invH.at(i + N).real(buf_inverseFilter.getSample(0, i));
-    }
+    jassert(buf_recordedSweptSine.getNumChannels() == buf_IR.getNumChannels());
+    std::string timeStamp = getTimeStamp();
+    exportWav(buf_recordedSweptSine, timeStamp + "_recordedESS.wav");
     
-    fft.perform(H.data(), H.data(), false);
-    fft.perform(invH.data(), invH.data(), false);
-
-    for(int i = 0; i < 2*N; ++i) {
-        H.at(i) *= invH.at(i);
-    }
-
-    fft.perform(H.data(), H.data(), true);
-
-    for (int i = 0; i < N; ++i) {
-        buf_IR.setSample(0, i, H.at(i).real());
+    for(int channel = 0; channel < numChannels; ++channel)
+    {
+        std::vector<std::complex<float>> H(2*N, std::complex<float>(0.0f, 0.0f));//SweptSine信号
+        std::vector<std::complex<float>> invH(2*N, std::complex<float>(0.0f, 0.0f));//逆フィルタ
+        for(int i = 0; i < buf_recordedSweptSine.getNumSamples(); ++i)
+        {
+            H.at(i + N).real(buf_recordedSweptSine.getSample(channel, i));
+            invH.at(i + N).real(buf_inverseFilter.getSample(0, i));
+        }
+        
+        fft.perform(H.data(), H.data(), false);
+        fft.perform(invH.data(), invH.data(), false);
+        
+        for(int i = 0; i < 2*N; ++i) {
+            H.at(i) *= invH.at(i);
+        }
+        
+        fft.perform(H.data(), H.data(), true);
+        
+        for (int i = 0; i < 2*N; ++i) {
+            buf_IR.setSample(channel, i, H.at(i).real());
+        }
     }
 
     double normalizeFactor = 1.0 / buf_IR.getMagnitude(0, buf_IR.getNumSamples());//IRのノーマライズ
     buf_IR.applyGain(normalizeFactor);
-    exportWav(buf_IR, timeStamp + "_ImpulseResponse.wav");
+    exportWav(buf_IR, timeStamp + "_IR.wav");
     measureState = measurementState::stopped;
 }
 
@@ -338,8 +344,8 @@ void MainContentComponent::exportWav(AudioSampleBuffer &bufferToWrite, String fi
 void MainContentComponent::showAudioSettings()
 {
     AudioDeviceSelectorComponent audioSettingsComp (deviceManager,
-                                                    1, 2,//InputChannels: min/max
-                                                    1, 2,//OutputChannels: min/max
+                                                    0, 128,//InputChannels: min/max
+                                                    0, 128,//OutputChannels: min/max
                                                     false,//Show MIDI input options
                                                     false,//Show MIDI output selector
                                                     false,//Stereo pair

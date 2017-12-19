@@ -39,6 +39,7 @@ private:
     void exportWav(AudioSampleBuffer &bufferToWrite, String fileName);
     std::string getTimeStamp();
     int nextpow2(int n);
+    int getNumInputChannels();
     
     enum class measurementState {
         stopped,
