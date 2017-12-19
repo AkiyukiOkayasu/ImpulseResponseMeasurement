@@ -279,10 +279,10 @@ void MainContentComponent::generateSweptSine(const double freqBegin, const doubl
 
 void MainContentComponent::computeIR()
 {
-    const int N = buf_recordedSweptSine.getNumSamples();//0埋め後のESS信号長
-    const int FFTOrder = log2(2*N);//円状畳み込みを直線上畳み込みと同等にするために2N分のFFTサイズを確保する
+    const int N = buf_recordedSweptSine.getNumSamples();//ESS信号長
+    const int FFTOrder = log2(2*N);//周波数領域の畳み込みを直線上畳み込みと同等にするためにFFTサイズは2Nにする
     buf_IR.clear();
-    buf_IR.setSize(1, 2*N);
+    buf_IR.setSize(1, N);
     dsp::FFT fft(FFTOrder);
     std::vector<std::complex<float>> H(2*N, std::complex<float>(0.0f, 0.0f));//SweptSine信号
     std::vector<std::complex<float>> invH(2*N, std::complex<float>(0.0f, 0.0f));//逆フィルタ
@@ -299,23 +299,18 @@ void MainContentComponent::computeIR()
     fft.perform(H.data(), H.data(), false);
     fft.perform(invH.data(), invH.data(), false);
 
-    for(int i = 0; i < 2*N; ++i)
-    {
+    for(int i = 0; i < 2*N; ++i) {
         H.at(i) *= invH.at(i);
     }
 
     fft.perform(H.data(), H.data(), true);
 
-    for (int i = 0; i < 2*N; ++i)
-    {
+    for (int i = 0; i < N; ++i) {
         buf_IR.setSample(0, i, H.at(i).real());
     }
 
-    exportWav(buf_IR, "nonNormarizedIR.wav");
-    //ノーマライズ
-    double normalizeFactor = 1.0 / buf_IR.getMagnitude(0, buf_IR.getNumSamples());
+    double normalizeFactor = 1.0 / buf_IR.getMagnitude(0, buf_IR.getNumSamples());//IRのノーマライズ
     buf_IR.applyGain(normalizeFactor);
-
     exportWav(buf_IR, timeStamp + "_ImpulseResponse.wav");
     measureState = measurementState::stopped;
 }
