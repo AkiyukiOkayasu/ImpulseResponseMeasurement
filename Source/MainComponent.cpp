@@ -408,6 +408,5 @@ int MainContentComponent::getNumInputChannels()
     {
         if(inputChannelInfo[i] == '1') ++numInputChannels;
     }
-    std::cout<<"numInputChannels: "<<numInputChannels<<std::endl;
     return numInputChannels;
 }
