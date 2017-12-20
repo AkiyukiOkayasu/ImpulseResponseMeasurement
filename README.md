@@ -6,8 +6,8 @@ Stand-alone application for Measurements impulse response(IR).
 MacOS10.12 later compatible.  
 
 ## Feature
-Adjustable frequency range measurements signal  
-Multi-channel support(up to 128 channel)  
+- Adjustable frequency range measurements signal  
+- Multi-channel support(up to 128 channel)  
 
 ## License
 GPLv3  
