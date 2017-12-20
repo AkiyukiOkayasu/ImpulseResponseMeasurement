@@ -1,6 +1,13 @@
-# ImpulseResponseMeasurement
+# Impulse Response Measurement  
 **WORK IN PROGRESS**  
-Please use own risk.  
+This software is work in progress. Please use it at your own risk.  
+<br>
+Stand-alone application for Measurements impulse response(IR).  
+MacOS10.12 later compatible.  
 
-For MacOS10.12 later.  
-Stand-alone application for Measurementing impulse response(IR).
+## Feature
+Adjustable frequency range measurements signal  
+Multi-channel support(up to 128 channel)  
+
+## License
+GPLv3  
