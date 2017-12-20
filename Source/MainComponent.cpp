@@ -4,34 +4,56 @@ MainContentComponent::MainContentComponent()
 {
     if(JUCE_MAC) setMacMainMenu(this);
     formatManager.registerBasicFormats();
+    setSize (400, 255);
+    
+    //保存したパラメータをXMLファイルから呼び出し
+    PropertiesFile::Options options;
+    options.applicationName     = ProjectInfo::projectName;
+    options.filenameSuffix      = "settings";
+    options.osxLibrarySubFolder = "Preferences";
+    appProperties = new ApplicationProperties();
+    appProperties->setStorageParameters (options);
+    auto userSettings = appProperties->getUserSettings();
+    ScopedPointer<XmlElement> savedAudioState (userSettings->getXmlValue ("audioDeviceState"));//オーディオインターフェースの設定
+    ScopedPointer<XmlElement> savedParameter (userSettings->getXmlValue("parameterSettings"));//パラメータの設定
+    const double minFreq = savedParameter->hasAttribute("minFreqRange") ? savedParameter->getDoubleAttribute("minFreqRange") : 20.0;
+    const double maxFreq = savedParameter->hasAttribute("maxFreqRange") ? savedParameter->getDoubleAttribute("maxFreqRange") : 20000.0;
+    const double duration = savedParameter->hasAttribute("duration") ? savedParameter->getDoubleAttribute("duration") : 5.0;
+    const double preSilence = savedParameter->hasAttribute("preSilence") ? savedParameter->getDoubleAttribute("preSilence") : 2.0;
+    const double postSilence = savedParameter->hasAttribute("postSilence") ? savedParameter->getDoubleAttribute("postSilence") : 3.0;
+    const double sampleRate = savedAudioState->hasAttribute("audioDeviceRate") ? savedAudioState->getDoubleAttribute("audioDeviceRate") : 20000.0;
+    const int nyquistRate = sampleRate / 2.0;
     
     addAndMakeVisible(sl_freqRange.range);
-    sl_freqRange.range.setRange (1, 20000, 1);
-    sl_freqRange.range.setSkewFactorFromMidPoint(2500.0);
     sl_freqRange.range.setSliderStyle (Slider::TwoValueHorizontal);
     sl_freqRange.range.setTextBoxStyle (Slider::NoTextBox, true, 80, 20);
     sl_freqRange.range.setColour (Slider::thumbColourId, Colours::aqua);
     sl_freqRange.range.setColour (Slider::trackColourId, Colour (0xff0093ff));
+    sl_freqRange.range.setRange (1, nyquistRate, 1);
+    sl_freqRange.range.setSkewFactorFromMidPoint(2500.0);
     sl_freqRange.range.addListener (this);
     addAndMakeVisible(sl_freqRange.minNumberBox);
-    sl_freqRange.minNumberBox.setRange (1, 20000, 1);
     sl_freqRange.minNumberBox.setSliderStyle (Slider::LinearBarVertical);
     sl_freqRange.minNumberBox.setTextBoxStyle (Slider::TextBoxLeft, false, 80, 20);
     sl_freqRange.minNumberBox.setColour (Slider::trackColourId, Colour (0x00181f22));
     sl_freqRange.minNumberBox.setTextValueSuffix("Hz");
     sl_freqRange.minNumberBox.setVelocityBasedMode(true);
+    sl_freqRange.minNumberBox.setRange (1, nyquistRate, 1);
+    sl_freqRange.minNumberBox.addListener(this);
     addAndMakeVisible(sl_freqRange.maxNumberBox);
-    sl_freqRange.maxNumberBox.setRange (1, 20000, 1);
     sl_freqRange.maxNumberBox.setSliderStyle (Slider::LinearBarVertical);
     sl_freqRange.maxNumberBox.setTextBoxStyle (Slider::TextBoxLeft, false, 80, 20);
     sl_freqRange.maxNumberBox.setColour (Slider::trackColourId, Colour (0x00181f22));
     sl_freqRange.maxNumberBox.setTextValueSuffix("Hz");
     sl_freqRange.maxNumberBox.setVelocityBasedMode(true);
+    sl_freqRange.maxNumberBox.setRange (1, nyquistRate, 1);
+    sl_freqRange.maxNumberBox.addListener(this);
     sl_freqRange.minNumberBox.getValueObject().referTo(sl_freqRange.minSharedValue);
     sl_freqRange.maxNumberBox.getValueObject().referTo(sl_freqRange.maxSharedValue);
     sl_freqRange.range.getMinValueObject().referTo (sl_freqRange.minSharedValue);
     sl_freqRange.range.getMaxValueObject().referTo (sl_freqRange.maxSharedValue);
-    
+    sl_freqRange.minNumberBox.setValue(minFreq, dontSendNotification);
+    sl_freqRange.maxNumberBox.setValue(maxFreq, dontSendNotification);
     
     addAndMakeVisible(lbl_appName);
     lbl_appName.setText("IR measure", dontSendNotification);
@@ -51,11 +73,14 @@ MainContentComponent::MainContentComponent()
     
     addAndMakeVisible (sl_preSilence);
     sl_preSilence.setRange (0, 30, 1);
-    sl_preSilence.setSliderStyle (Slider::IncDecButtons);
+    sl_preSilence.setSliderStyle (Slider::LinearBar);
+    sl_preSilence.setVelocityBasedMode(true);
+    sl_preSilence.setTextValueSuffix("s");
     sl_preSilence.setTextBoxStyle (Slider::TextBoxLeft, false, 60, 20);
+    sl_preSilence.setValue(preSilence, dontSendNotification);
     sl_preSilence.addListener (this);
     addAndMakeVisible (lbl_preSilence);
-    lbl_preSilence.setText("Pre Silence(sec)", dontSendNotification);
+    lbl_preSilence.setText("Pre Silence", dontSendNotification);
     lbl_preSilence.setFont (Font (Font::getDefaultMonospacedFontName(), 15.00f, Font::plain).withTypefaceStyle ("Regular"));
     lbl_preSilence.setJustificationType (Justification::centredLeft);
     lbl_preSilence.setEditable (false, false, false);
@@ -65,11 +90,14 @@ MainContentComponent::MainContentComponent()
     
     addAndMakeVisible (sl_postSilence);
     sl_postSilence.setRange (0, 30, 1);
-    sl_postSilence.setSliderStyle (Slider::IncDecButtons);
+    sl_postSilence.setSliderStyle(Slider::LinearBar);
+    sl_postSilence.setVelocityBasedMode(true);
+    sl_postSilence.setTextValueSuffix("s");
     sl_postSilence.setTextBoxStyle (Slider::TextBoxLeft, false, 60, 20);
+    sl_postSilence.setValue(postSilence, dontSendNotification);
     sl_postSilence.addListener (this);
     addAndMakeVisible (lbl_postSilence);
-    lbl_postSilence.setText("Minimum post Silence(sec)", dontSendNotification);
+    lbl_postSilence.setText("Minimum post Silence", dontSendNotification);
     lbl_postSilence.setFont (Font (Font::getDefaultMonospacedFontName(), 15.00f, Font::plain).withTypefaceStyle ("Regular"));
     lbl_postSilence.setJustificationType (Justification::centredLeft);
     lbl_postSilence.setEditable (false, false, false);
@@ -79,11 +107,14 @@ MainContentComponent::MainContentComponent()
     
     addAndMakeVisible (sl_duration);
     sl_duration.setRange (5, 180, 5);
-    sl_duration.setSliderStyle (Slider::IncDecButtons);
+    sl_duration.setSliderStyle (Slider::LinearBar);
+    sl_duration.setVelocityBasedMode(true);
+    sl_duration.setTextValueSuffix("s");
     sl_duration.setTextBoxStyle (Slider::TextBoxLeft, false, 60, 20);
+    sl_duration.setValue(duration, dontSendNotification);
     sl_duration.addListener (this);
     addAndMakeVisible (lbl_duration);
-    lbl_duration.setText("Duration(sec)", dontSendNotification);
+    lbl_duration.setText("Duration", dontSendNotification);
     lbl_duration.setFont (Font (Font::getDefaultMonospacedFontName(), 15.00f, Font::plain).withTypefaceStyle ("Regular"));
     lbl_duration.setJustificationType (Justification::centredLeft);
     lbl_duration.setEditable (false, false, false);
@@ -91,39 +122,10 @@ MainContentComponent::MainContentComponent()
     lbl_duration.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
     lbl_duration.attachToComponent(&sl_duration, true);
     
-    addAndMakeVisible (btn_calib);
-    btn_calib.setButtonText (TRANS("Calibrate Latency"));
-    btn_calib.addListener (this);
-    addAndMakeVisible (lbl_latency);
-    lbl_latency.setText("Latency is xxx samples", dontSendNotification);
-    lbl_latency.setFont (Font (15.00f, Font::plain).withTypefaceStyle ("Regular"));
-    lbl_latency.setJustificationType (Justification::centredLeft);
-    lbl_latency.setEditable (false, false, false);
-    lbl_latency.setColour (TextEditor::textColourId, Colours::black);
-    lbl_latency.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
-    
     addAndMakeVisible (btn_measure);
-    btn_measure.setButtonText (TRANS("Start Measurement"));
+    btn_measure.setButtonText ("Start Measurement");
     btn_measure.addListener (this);
     
-    setSize (400, 280);
-    
-    //保存したパラメータをXMLファイルから呼び出し
-    PropertiesFile::Options options;
-    options.applicationName     = ProjectInfo::projectName;
-    options.filenameSuffix      = "settings";
-    options.osxLibrarySubFolder = "Preferences";
-    appProperties = new ApplicationProperties();
-    appProperties->setStorageParameters (options);
-    auto userSettings = appProperties->getUserSettings();
-    ScopedPointer<XmlElement> savedAudioState (userSettings->getXmlValue ("audioDeviceState"));//オーディオインターフェースの設定
-    ScopedPointer<XmlElement> savedParameter (userSettings->getXmlValue("parameterSettings"));//パラメータの設定
-    const double duration = savedParameter && savedParameter->hasAttribute("duration") ? savedParameter->getDoubleAttribute("duration") : 5.0;
-    const double preSilnce = savedParameter && savedParameter->hasAttribute("preSilence") ? savedParameter->getDoubleAttribute("preSilence") : 2.0;
-    const double postSilnce = savedParameter && savedParameter->hasAttribute("postSilence") ? savedParameter->getDoubleAttribute("postSilence") : 3.0;
-    sl_duration.setValue(duration, dontSendNotification);
-    sl_preSilence.setValue(preSilnce, dontSendNotification);
-    sl_postSilence.setValue(postSilnce, dontSendNotification);
     setAudioChannels (128, 128, savedAudioState);
     deviceManager.addAudioCallback(&sweptSinePlayer);
 }
@@ -140,9 +142,9 @@ void MainContentComponent::prepareToPlay (int samplesPerBlockExpected, double sa
     auto freqRange = sl_freqRange.range.getRange();
     double nyquistFreq = sampleRate / 2.0;
     freqRange.setEnd(nyquistFreq);
-    sl_freqRange.range.setRange(freqRange, sl_freqRange.range.getInterval());
     sl_freqRange.minNumberBox.setRange(freqRange, sl_freqRange.minNumberBox.getInterval());
     sl_freqRange.maxNumberBox.setRange(freqRange, sl_freqRange.maxNumberBox.getInterval());
+    sl_freqRange.range.setRange(freqRange, sl_freqRange.range.getInterval());
     generateSweptSine(sl_freqRange.minSharedValue.getValue(), sl_freqRange.maxSharedValue.getValue(), sl_duration.getValue(), sl_postSilence.getValue());
 }
 
@@ -208,15 +210,13 @@ void MainContentComponent::resized()
     sl_duration.setBounds(255, 104, 130, 24);
     sl_preSilence.setBounds (255, 133, 130, 24);
     sl_postSilence.setBounds(255, 162, 130, 24);
-    btn_calib.setBounds (10, 205, 140, 28);
-    lbl_latency.setBounds (151, 205, 150, 24);
-    btn_measure.setBounds (10, 240, 140, 28);
+    btn_measure.setBounds (10, 195, 380, 50);
 }
 
 //==============================================================================
 void MainContentComponent::sliderValueChanged (Slider* slider)
 {
-    if(slider == &sl_freqRange.range || slider == &sl_freqRange.minNumberBox || slider == &sl_freqRange.maxNumberBox || slider == &sl_duration)
+    if(slider == &sl_freqRange.range || slider == &sl_freqRange.minNumberBox || slider == &sl_freqRange.maxNumberBox || slider == &sl_duration || slider == &sl_postSilence)
     {
         generateSweptSine(sl_freqRange.minSharedValue.getValue(), sl_freqRange.maxSharedValue.getValue(), sl_duration.getValue(), sl_postSilence.getValue());
     }
@@ -227,6 +227,8 @@ void MainContentComponent::sliderValueChanged (Slider* slider)
     //スライダーの値をXMLで保存
     String xmltag =  "parameter";
     ScopedPointer<XmlElement> parameterSettings = new XmlElement(xmltag);
+    parameterSettings->setAttribute("minFreqRange", sl_freqRange.minNumberBox.getValue());
+    parameterSettings->setAttribute("maxFreqRange", sl_freqRange.maxNumberBox.getValue());
     parameterSettings->setAttribute("preSilence", sl_preSilence.getValue());
     parameterSettings->setAttribute("postSilence", sl_postSilence.getValue());
     parameterSettings->setAttribute("duration", sl_duration.getValue());
@@ -246,9 +248,6 @@ void MainContentComponent::buttonClicked (Button* button)
         buf_IR.setSize(numInputChannels, size * 2);
         measureState = measurementState::starting;
         sweptSinePlayer.play(&buf_sweptSine, false, true);
-    }
-    else if (button == &btn_calib)
-    {
     }
 }
 
@@ -404,8 +403,7 @@ int MainContentComponent::getNumInputChannels()
     deviceManager.getAudioDeviceSetup(deviceSetup);
     auto inputChannelInfo = deviceSetup.inputChannels.toString(2);
     int numInputChannels = 0;
-    for(int i = 0; i < inputChannelInfo.length(); ++i)
-    {
+    for(int i = 0; i < inputChannelInfo.length(); ++i) {
         if(inputChannelInfo[i] == '1') ++numInputChannels;
     }
     return numInputChannels;
