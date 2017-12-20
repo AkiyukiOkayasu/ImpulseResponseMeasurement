@@ -68,8 +68,6 @@ private:
     Label lbl_duration;
     Slider sl_duration;
     TextButton btn_measure;
-    TextButton btn_calib;
-    Label lbl_latency;
     AudioSampleBuffer buf_sweptSine;
     AudioSampleBuffer buf_inverseFilter;
     AudioSampleBuffer buf_recordedSweptSine;
