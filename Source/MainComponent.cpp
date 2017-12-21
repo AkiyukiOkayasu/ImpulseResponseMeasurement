@@ -294,6 +294,12 @@ void MainContentComponent::generateSweptSine(const double freqBegin, const doubl
         double vInvFilter = sin(alpha * (exp((tInvFilter / sweptSineDuration) * log(freqEnd / freqBegin)) - 1.0))  * gainInvFilter;
         inverseFilterArray[i] = vInvFilter;
     }
+    
+    for(long i = sweptSineLengthInSamples - 1; i > 0; --i)//ゼロクロス点でトリミング
+    {
+        if(fabs(ESSArray[i]) < 0.003) break;
+        ESSArray[i] = 0.0;
+    }
 }
 
 void MainContentComponent::computeIR()
