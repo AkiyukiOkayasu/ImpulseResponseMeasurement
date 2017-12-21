@@ -285,13 +285,19 @@ void MainContentComponent::generateSweptSine(const double freqBegin, const doubl
     auto* inverseFilterArray = buf_inverseFilter.getWritePointer(0);
     for(long i = 0; i < sweptSineLengthInSamples; ++i)
     {
+        //ESS生成
         double tESS = (double)i / sampleRate;
-        double vESS = sin(alpha * (exp((tESS / sweptSineDuration) * log(freqEnd / freqBegin)) - 1.0));
+        double vESS = alpha * (exp((tESS / sweptSineDuration) * log(freqEnd / freqBegin)) - 1.0);
+        vESS = fmod(vESS, 2.0 * double_Pi);
+        vESS = sin(vESS);
         ESSArray[i] = vESS;
         
+        //逆フィルタ生成
         double gainInvFilter = Decibels::decibelsToGain(invFilterGainCoefficient * (i / (double)sweptSineLengthInSamples));
         double tInvFilter = (double)(sweptSineLengthInSamples - (i + 1)) / sampleRate;
-        double vInvFilter = sin(alpha * (exp((tInvFilter / sweptSineDuration) * log(freqEnd / freqBegin)) - 1.0))  * gainInvFilter;
+        double vInvFilter = alpha * (exp((tInvFilter / sweptSineDuration) * log(freqEnd / freqBegin)) - 1.0);
+        vInvFilter = fmod(vInvFilter, 2.0 * double_Pi);
+        vInvFilter = sin(vInvFilter) * gainInvFilter;
         inverseFilterArray[i] = vInvFilter;
     }
     
