@@ -301,9 +301,13 @@ void MainContentComponent::generateSweptSine(const double freqBegin, const doubl
         inverseFilterArray[i] = vInvFilter;
     }
     
-    for(long i = sweptSineLengthInSamples - 1; i > 0; --i)//ゼロクロス点でトリミング
+    for(long i = sweptSineLengthInSamples - 1; i > 0; --i)
     {
-        if(fabs(ESSArray[i]) < 0.003) break;
+        //ESS終端でのクリックノイズ除去のために終端最近傍のゼロ位相点でトリミング
+        double t = (double)i / sampleRate;
+        double v = alpha * (exp((t / sweptSineDuration) * log(freqEnd / freqBegin)) - 1.0);
+        v = fmod(v, 2.0 * double_Pi);
+        if(v <= 0.001) break;
         ESSArray[i] = 0.0;
     }
 }
