@@ -244,8 +244,6 @@ void MainContentComponent::buttonClicked (Button* button)
         const int numInputChannels = getNumInputChannels();
         buf_recordedSweptSine.clear();
         buf_recordedSweptSine.setSize(numInputChannels, size);
-        buf_IR.clear();
-        buf_IR.setSize(numInputChannels, size * 2);
         measureState = measurementState::starting;
         sweptSinePlayer.play(&buf_sweptSine, false, true);
     }
@@ -314,21 +312,19 @@ void MainContentComponent::generateSweptSine(const double freqBegin, const doubl
 
 void MainContentComponent::computeIR()
 {
+    std::string timeStamp = getTimeStamp();
+    exportWav(buf_recordedSweptSine, timeStamp + "_recordedESS.wav");
     const int numChannels = buf_recordedSweptSine.getNumChannels();
     const int N = buf_recordedSweptSine.getNumSamples();//ESS信号長
     const int FFTOrder = log2(2*N);//周波数領域の畳み込みを直線上畳み込みと同等にするためにFFTサイズは2Nにする
     dsp::FFT fft(FFTOrder);
-    jassert(buf_recordedSweptSine.getNumSamples() == buf_inverseFilter.getNumSamples());
-    jassert(buf_recordedSweptSine.getNumChannels() == buf_IR.getNumChannels());
-    std::string timeStamp = getTimeStamp();
-    exportWav(buf_recordedSweptSine, timeStamp + "_recordedESS.wav");
+    auto** recordESSArray = buf_recordedSweptSine.getArrayOfWritePointers();
+    auto* inverseFilterArray = buf_inverseFilter.getWritePointer(0);
     
     for(int channel = 0; channel < numChannels; ++channel)
     {
         std::vector<std::complex<float>> H(2*N, std::complex<float>(0.0f, 0.0f));//SweptSine信号
         std::vector<std::complex<float>> invH(2*N, std::complex<float>(0.0f, 0.0f));//逆フィルタ
-        auto** recordESSArray = buf_recordedSweptSine.getArrayOfWritePointers();
-        auto* inverseFilterArray = buf_inverseFilter.getWritePointer(0);
         for(long i = 0; i < buf_recordedSweptSine.getNumSamples(); ++i)
         {
             H.at(i + N).real(recordESSArray[channel][i]);
