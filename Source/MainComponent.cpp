@@ -270,8 +270,8 @@ void MainContentComponent::menuItemSelected(int menuItemID, int topLevelMenuInde
 void MainContentComponent::generateSweptSine(const double freqBegin, const double freqEnd, const double sweptSineDuration, const double postSilenceDuration)
 {
     const double sampleRate = deviceManager.getCurrentAudioDevice()->getCurrentSampleRate();
-    const int sweptSineLengthInSamples = sweptSineDuration * sampleRate;
-    const int totalLengthInSamples = nextpow2(sweptSineLengthInSamples + (postSilenceDuration * sampleRate));//無音も含めた全体のサンプル数
+    const int sweptSineLengthInSamples = sweptSineDuration * sampleRate;//ESS信号長
+    const int totalLengthInSamples = sweptSineLengthInSamples + (postSilenceDuration * sampleRate);//ESS信号後の無音も含めた全体のサンプル数
     buf_sweptSine.clear();
     buf_sweptSine.setSize(1, totalLengthInSamples);
     buf_inverseFilter.clear();
@@ -315,20 +315,23 @@ void MainContentComponent::computeIR()
     std::string timeStamp = getTimeStamp();
     exportWav(buf_recordedSweptSine, timeStamp + "_recordedESS.wav");
     const int numChannels = buf_recordedSweptSine.getNumChannels();
-    const int N = buf_recordedSweptSine.getNumSamples();//ESS信号長
+    const int N = nextpow2(buf_recordedSweptSine.getNumSamples());
     const int FFTOrder = log2(2*N);//周波数領域の畳み込みを直線上畳み込みと同等にするためにFFTサイズは2Nにする
     dsp::FFT fft(FFTOrder);
+    buf_IR.clear();
+    buf_IR.setSize(numChannels, 2*N);
     auto** recordESSArray = buf_recordedSweptSine.getArrayOfWritePointers();
     auto* inverseFilterArray = buf_inverseFilter.getWritePointer(0);
     
+    const int testOffset = N - buf_recordedSweptSine.getNumSamples();
     for(int channel = 0; channel < numChannels; ++channel)
     {
         std::vector<std::complex<float>> H(2*N, std::complex<float>(0.0f, 0.0f));//SweptSine信号
         std::vector<std::complex<float>> invH(2*N, std::complex<float>(0.0f, 0.0f));//逆フィルタ
         for(long i = 0; i < buf_recordedSweptSine.getNumSamples(); ++i)
         {
-            H.at(i + N).real(recordESSArray[channel][i]);
-            invH.at(i + N).real(inverseFilterArray[i]);
+            H.at(i + N + testOffset).real(recordESSArray[channel][i]);
+            invH.at(i + N + testOffset).real(inverseFilterArray[i]);
         }
         
         fft.perform(H.data(), H.data(), false);
@@ -345,7 +348,8 @@ void MainContentComponent::computeIR()
             IRArray[channel][i] = H.at(i).real();
         }
     }
-
+    
+    //        const int IRoffset = sl_duration.getValue() * deviceManager.getCurrentAudioDevice()->getCurrentSampleRate();
     double normalizeFactor = 1.0 / buf_IR.getMagnitude(0, buf_IR.getNumSamples());//IRのノーマライズ
     buf_IR.applyGain(normalizeFactor);
     exportWav(buf_IR, timeStamp + "_IR.wav");
