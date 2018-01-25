@@ -15,7 +15,7 @@ struct CustomLookAndFeel    : public LookAndFeel_V4
         setColour(Slider::rotarySliderFillColourId, Colour::Colour(0xFFC6DBF0));//ロータリーエンコーダーの外周(有効範囲)
         setColour(Slider::rotarySliderOutlineColourId, Colour::Colour(0xFF2B2B2A));//ロータリーエンコーダーの外周(非有効範囲)
         setColour(Slider::trackColourId, Colour::Colour(0xFFAED1E6));//スライダーの有効範囲
-        setColour(Slider::backgroundColourId, Colour::Colour(0x002B2B2A));//スライダーの背景
+        setColour(Slider::backgroundColourId, Colour::Colour(0xFF2B2B2A));//スライダーの背景
         setColour(Slider::textBoxTextColourId, Colour::Colour(0xFF2B2B2A));
         setColour(Slider::textBoxOutlineColourId, Colour::Colour(0xFF2B2B2A));
         setColour(Label::textColourId, Colour::Colour(0xFF2B2B2A));
@@ -53,6 +53,13 @@ public:
     void showAudioSettings();
     
 private:
+    enum class measurementState {
+        stopped,
+        starting,
+        started,
+        computingIR
+    };
+    void changeMeasurementState(measurementState newState);
     void generateSweptSine(const double freqBegin, const double freqEnd, const double sweptSineDuration, const double postSilenceDuration);
     void measurementSweptSine();
     void computeIR();
@@ -61,12 +68,6 @@ private:
     int nextpow2(int n);
     int getNumInputChannels();
     
-    enum class measurementState {
-        stopped,
-        starting,
-        started,
-        computingIR
-    };
     measurementState measureState = measurementState::stopped;
     AudioFormatManager formatManager;
     SoundPlayer sweptSinePlayer;

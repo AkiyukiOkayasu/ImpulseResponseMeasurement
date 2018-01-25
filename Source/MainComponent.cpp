@@ -107,7 +107,7 @@ MainContentComponent::MainContentComponent()
     lbl_duration.setFont (Font (Font::getDefaultMonospacedFontName(), 15.00f, Font::plain).withTypefaceStyle ("Regular"));
     lbl_duration.setJustificationType (Justification::centredLeft);
     lbl_duration.setEditable (false, false, false);
-
+    
     lbl_duration.attachToComponent(&sl_duration, true);
     
     addAndMakeVisible (btn_measure);
@@ -147,8 +147,7 @@ void MainContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& buff
         }
         case measurementState::starting:
         {
-            recordIndex = 0;
-            measureState = measurementState::started;
+            changeMeasurementState(measurementState::started);
             break;
         }
         case measurementState::started:
@@ -171,7 +170,7 @@ void MainContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& buff
                 }
                 measureState = measurementState::computingIR;
                 std::thread th(&MainContentComponent::computeIR, this);
-                th.detach();
+                th.join();
             }
             
             recordIndex += bufferSize;
@@ -213,7 +212,8 @@ void MainContentComponent::sliderValueChanged (Slider* slider)
 {
     if(slider == &sl_freqRange.range || slider == &sl_freqRange.minNumberBox || slider == &sl_freqRange.maxNumberBox || slider == &sl_duration || slider == &sl_postSilence)
     {
-        generateSweptSine(sl_freqRange.minSharedValue.getValue(), sl_freqRange.maxSharedValue.getValue(), sl_duration.getValue(), sl_postSilence.getValue());
+        std::thread th(&MainContentComponent::generateSweptSine, this, sl_freqRange.minSharedValue.getValue(), sl_freqRange.maxSharedValue.getValue(), sl_duration.getValue(), sl_postSilence.getValue());
+        th.join();
     }
     else if (slider == &sl_preSilence)
     {
@@ -236,7 +236,7 @@ void MainContentComponent::buttonClicked (Button* button)
     if (button == &btn_measure)
     {
         std::thread th(&MainContentComponent::measurementSweptSine, this);
-        th.detach();
+        th.join();
     }
 }
 
@@ -258,46 +258,87 @@ void MainContentComponent::menuItemSelected(int menuItemID, int topLevelMenuInde
     if (menuItemID == 1) showAudioSettings();
 }
 
+void MainContentComponent::changeMeasurementState(measurementState newState)
+{
+    //GUI周りの処理を追加すること！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
+    switch (newState)
+    {
+        case measurementState::stopped:
+        {
+            /*
+             GUI有効化
+             */
+            break;
+        }
+        case measurementState::starting:
+        {
+            recordIndex = 0;
+            /*
+             GUI無効化
+             */
+            break;
+        }
+        case measurementState::started:
+        {
+            /*
+             GUI無効化
+             */
+            break;
+        }
+        case measurementState::computingIR:
+        {
+            /*
+             GUI無効化
+             */
+            break;
+        }
+    }
+    measureState = newState;
+}
+
 void MainContentComponent::generateSweptSine(const double freqBegin, const double freqEnd, const double sweptSineDuration, const double postSilenceDuration)
 {
-    const double sampleRate = deviceManager.getCurrentAudioDevice()->getCurrentSampleRate();
-    const int sweptSineLengthInSamples = sweptSineDuration * sampleRate;//ESS信号長
-    const int totalLengthInSamples = sweptSineLengthInSamples + (postSilenceDuration * sampleRate);//ESS信号後の無音も含めた全体のサンプル数
-    buf_sweptSine.clear();
-    buf_sweptSine.setSize(1, totalLengthInSamples);
-    buf_inverseFilter.clear();
-    buf_inverseFilter.setSize(1, totalLengthInSamples);
-    
-    const double alpha = (2.0 * double_Pi * freqBegin * sweptSineDuration) / log(freqEnd / freqBegin);
-    const double invFilterGainCoefficient = (-6.0 * log2(freqEnd / freqBegin));
-    auto* ESSArray = buf_sweptSine.getWritePointer(0);
-    auto* inverseFilterArray = buf_inverseFilter.getWritePointer(0);
-    for(long i = 0; i < sweptSineLengthInSamples; ++i)
+    if(measureState == measurementState::stopped)
     {
-        //ESS生成
-        double tESS = (double)i / sampleRate;
-        double vESS = alpha * (exp((tESS / sweptSineDuration) * log(freqEnd / freqBegin)) - 1.0);
-        vESS = fmod(vESS, 2.0 * double_Pi);
-        vESS = sin(vESS);
-        ESSArray[i] = vESS;
+        const double sampleRate = deviceManager.getCurrentAudioDevice()->getCurrentSampleRate();
+        const int sweptSineLengthInSamples = sweptSineDuration * sampleRate;//ESS信号長
+        const int totalLengthInSamples = sweptSineLengthInSamples + (postSilenceDuration * sampleRate);//ESS信号後の無音も含めた全体のサンプル数
+        buf_sweptSine.clear();
+        buf_sweptSine.setSize(1, totalLengthInSamples);
+        buf_inverseFilter.clear();
+        buf_inverseFilter.setSize(1, totalLengthInSamples);
         
-        //逆フィルタ生成
-        double gainInvFilter = Decibels::decibelsToGain(invFilterGainCoefficient * (i / (double)sweptSineLengthInSamples));
-        double tInvFilter = (double)(sweptSineLengthInSamples - (i + 1)) / sampleRate;
-        double vInvFilter = alpha * (exp((tInvFilter / sweptSineDuration) * log(freqEnd / freqBegin)) - 1.0);
-        vInvFilter = fmod(vInvFilter, 2.0 * double_Pi);
-        vInvFilter = sin(vInvFilter) * gainInvFilter;
-        inverseFilterArray[i] = vInvFilter;
-    }
-    
-    for(long i = sweptSineLengthInSamples - 1; i > 0; --i)
-    {
-        //ESS終端でのクリックノイズ除去のために終端最近傍のゼロ位相点でトリミング
-        double t = (double)i / sampleRate;
-        double v = alpha * (exp((t / sweptSineDuration) * log(freqEnd / freqBegin)) - 1.0);
-        v = fmod(v, 2.0 * double_Pi);
-        if(v <= 0.001) break;
-        ESSArray[i] = 0.0;
+        const double alpha = (2.0 * double_Pi * freqBegin * sweptSineDuration) / log(freqEnd / freqBegin);
+        const double invFilterGainCoefficient = (-6.0 * log2(freqEnd / freqBegin));
+        auto* ESSArray = buf_sweptSine.getWritePointer(0);
+        auto* inverseFilterArray = buf_inverseFilter.getWritePointer(0);
+        for(long i = 0; i < sweptSineLengthInSamples; ++i)
+        {
+            //ESS生成
+            double tESS = (double)i / sampleRate;
+            double vESS = alpha * (exp((tESS / sweptSineDuration) * log(freqEnd / freqBegin)) - 1.0);
+            vESS = fmod(vESS, 2.0 * double_Pi);
+            vESS = sin(vESS);
+            ESSArray[i] = vESS;
+            
+            //逆フィルタ生成
+            double gainInvFilter = Decibels::decibelsToGain(invFilterGainCoefficient * (i / (double)sweptSineLengthInSamples));
+            double tInvFilter = (double)(sweptSineLengthInSamples - (i + 1)) / sampleRate;
+            double vInvFilter = alpha * (exp((tInvFilter / sweptSineDuration) * log(freqEnd / freqBegin)) - 1.0);
+            vInvFilter = fmod(vInvFilter, 2.0 * double_Pi);
+            vInvFilter = sin(vInvFilter) * gainInvFilter;
+            inverseFilterArray[i] = vInvFilter;
+        }
+        
+        for(long i = sweptSineLengthInSamples - 1; i > 0; --i)
+        {
+            //ESS終端でのクリックノイズ除去のために終端最近傍のゼロ位相点でトリミング
+            double t = (double)i / sampleRate;
+            double v = alpha * (exp((t / sweptSineDuration) * log(freqEnd / freqBegin)) - 1.0);
+            v = fmod(v, 2.0 * double_Pi);
+            if(v <= 0.001) break;
+            ESSArray[i] = 0.0;
+        }
     }
 }
 
@@ -310,7 +351,7 @@ void MainContentComponent::measurementSweptSine()
         buf_recordedSweptSine.clear();
         buf_recordedSweptSine.setSize(numInputChannels, size);
         std::this_thread::sleep_for(std::chrono::seconds(int(sl_preSilence.getValue())));
-        measureState = measurementState::starting;
+        changeMeasurementState(measurementState::starting);
         sweptSinePlayer.play(&buf_sweptSine, false, true);
     }
 }
@@ -357,7 +398,7 @@ void MainContentComponent::computeIR()
     double normalizeFactor = 1.0 / buf_IR.getMagnitude(0, buf_IR.getNumSamples());//IRのノーマライズ
     buf_IR.applyGain(normalizeFactor);
     exportWav(buf_IR, timeStamp + "_IR.wav");
-    measureState = measurementState::stopped;
+    changeMeasurementState(measurementState::stopped);
 }
 
 void MainContentComponent::exportWav(AudioSampleBuffer &bufferToWrite, String fileName)
