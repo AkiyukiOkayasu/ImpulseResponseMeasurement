@@ -6,6 +6,24 @@
 #include <iomanip>
 #include <thread>
 
+struct CustomLookAndFeel    : public LookAndFeel_V4
+{
+    CustomLookAndFeel()
+    {
+        setColour(ResizableWindow::backgroundColourId, Colour::Colour(0xFFF9F9F4));
+        setColour(Slider::thumbColourId, Colour::Colour(0xFFAED1E6));//ロータリーエンコーダーのつまみ
+        setColour(Slider::rotarySliderFillColourId, Colour::Colour(0xFFC6DBF0));//ロータリーエンコーダーの外周(有効範囲)
+        setColour(Slider::rotarySliderOutlineColourId, Colour::Colour(0xFF2B2B2A));//ロータリーエンコーダーの外周(非有効範囲)
+        setColour(Slider::trackColourId, Colour::Colour(0xFFAED1E6));//スライダーの有効範囲
+        setColour(Slider::backgroundColourId, Colour::Colour(0xFF2B2B2A));//スライダーの背景
+        setColour(Slider::textBoxTextColourId, Colour::Colour(0xFF2B2B2A));
+        setColour(Slider::textBoxOutlineColourId, Colour::Colour(0xFF2B2B2A));
+        setColour(Label::textColourId, Colour::Colour(0xFF2B2B2A));
+        setColour(ToggleButton::tickColourId, Colour::Colour(0xFF2B2B2A));
+        setColour(ToggleButton::tickDisabledColourId, Colour::Colour(0xFF2B2B2A));
+    }
+};
+
 class MainContentComponent   :
 public AudioAppComponent,
 public Slider::Listener,
@@ -76,6 +94,7 @@ private:
     AudioSampleBuffer buf_IR;
     unsigned long recordIndex = 0;
     ScopedPointer<ApplicationProperties> appProperties;//オーディオ設定,パラメータの記録用
+    CustomLookAndFeel lookAndFeel;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainContentComponent)
 };

@@ -3,6 +3,7 @@
 MainContentComponent::MainContentComponent()
 {
     if(JUCE_MAC) setMacMainMenu(this);
+    setLookAndFeel(&lookAndFeel);
     formatManager.registerBasicFormats();
     setSize (400, 255);
     
@@ -132,6 +133,7 @@ MainContentComponent::MainContentComponent()
 
 MainContentComponent::~MainContentComponent()
 {
+    setLookAndFeel(nullptr);
     if (JUCE_MAC) setMacMainMenu(nullptr);
     shutdownAudio();
 }
