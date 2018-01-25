@@ -4,6 +4,7 @@
 #include <chrono>
 #include <sstream>
 #include <iomanip>
+#include <thread>
 
 class MainContentComponent   :
 public AudioAppComponent,
@@ -35,6 +36,7 @@ public:
     
 private:
     void generateSweptSine(const double freqBegin, const double freqEnd, const double sweptSineDuration, const double postSilenceDuration);
+    void measurementSweptSine();
     void computeIR();
     void exportWav(AudioSampleBuffer &bufferToWrite, String fileName);
     std::string getTimeStamp();

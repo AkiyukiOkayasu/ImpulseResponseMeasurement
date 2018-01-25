@@ -240,12 +240,8 @@ void MainContentComponent::buttonClicked (Button* button)
 {
     if (button == &btn_measure)
     {
-        const int size = buf_sweptSine.getNumSamples();
-        const int numInputChannels = getNumInputChannels();
-        buf_recordedSweptSine.clear();
-        buf_recordedSweptSine.setSize(numInputChannels, size);
-        measureState = measurementState::starting;
-        sweptSinePlayer.play(&buf_sweptSine, false, true);
+        std::thread th(&MainContentComponent::measurementSweptSine, this);
+        th.detach();
     }
 }
 
@@ -307,6 +303,20 @@ void MainContentComponent::generateSweptSine(const double freqBegin, const doubl
         v = fmod(v, 2.0 * double_Pi);
         if(v <= 0.001) break;
         ESSArray[i] = 0.0;
+    }
+}
+
+void MainContentComponent::measurementSweptSine()
+{
+    if(measureState == measurementState::stopped)
+    {
+        const int size = buf_sweptSine.getNumSamples();
+        const int numInputChannels = getNumInputChannels();
+        buf_recordedSweptSine.clear();
+        buf_recordedSweptSine.setSize(numInputChannels, size);
+        std::this_thread::sleep_for(std::chrono::seconds(int(sl_preSilence.getValue())));
+        measureState = measurementState::starting;
+        sweptSinePlayer.play(&buf_sweptSine, false, true);
     }
 }
 
