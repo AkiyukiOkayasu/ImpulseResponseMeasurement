@@ -28,15 +28,12 @@ MainContentComponent::MainContentComponent()
     addAndMakeVisible(sl_freqRange.range);
     sl_freqRange.range.setSliderStyle (Slider::TwoValueHorizontal);
     sl_freqRange.range.setTextBoxStyle (Slider::NoTextBox, true, 80, 20);
-    sl_freqRange.range.setColour (Slider::thumbColourId, Colours::aqua);
-    sl_freqRange.range.setColour (Slider::trackColourId, Colour (0xff0093ff));
     sl_freqRange.range.setRange (1, nyquistRate, 1);
     sl_freqRange.range.setSkewFactorFromMidPoint(2500.0);
     sl_freqRange.range.addListener (this);
     addAndMakeVisible(sl_freqRange.minNumberBox);
     sl_freqRange.minNumberBox.setSliderStyle (Slider::LinearBarVertical);
     sl_freqRange.minNumberBox.setTextBoxStyle (Slider::TextBoxLeft, false, 80, 20);
-    sl_freqRange.minNumberBox.setColour (Slider::trackColourId, Colour (0x00181f22));
     sl_freqRange.minNumberBox.setTextValueSuffix("Hz");
     sl_freqRange.minNumberBox.setVelocityBasedMode(true);
     sl_freqRange.minNumberBox.setRange (1, nyquistRate, 1);
@@ -44,7 +41,6 @@ MainContentComponent::MainContentComponent()
     addAndMakeVisible(sl_freqRange.maxNumberBox);
     sl_freqRange.maxNumberBox.setSliderStyle (Slider::LinearBarVertical);
     sl_freqRange.maxNumberBox.setTextBoxStyle (Slider::TextBoxLeft, false, 80, 20);
-    sl_freqRange.maxNumberBox.setColour (Slider::trackColourId, Colour (0x00181f22));
     sl_freqRange.maxNumberBox.setTextValueSuffix("Hz");
     sl_freqRange.maxNumberBox.setVelocityBasedMode(true);
     sl_freqRange.maxNumberBox.setRange (1, nyquistRate, 1);
@@ -61,16 +57,12 @@ MainContentComponent::MainContentComponent()
     lbl_appName.setFont (Font (Font::getDefaultMonospacedFontName(), 26.00f, Font::plain).withTypefaceStyle ("Regular"));
     lbl_appName.setJustificationType (Justification::centredLeft);
     lbl_appName.setEditable (false, false, false);
-    lbl_appName.setColour (TextEditor::textColourId, Colours::black);
-    lbl_appName.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
     addAndMakeVisible (lbl_version);
     std::string version = "ver" + std::string(ProjectInfo::versionString);
     lbl_version.setText(version, dontSendNotification);
     lbl_version.setFont (Font (Font::getDefaultMonospacedFontName(), 15.00f, Font::plain).withTypefaceStyle ("Regular"));
     lbl_version.setJustificationType (Justification::centredLeft);
     lbl_version.setEditable (false, false, false);
-    lbl_version.setColour (TextEditor::textColourId, Colours::black);
-    lbl_version.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
     
     addAndMakeVisible (sl_preSilence);
     sl_preSilence.setRange (0, 30, 1);
@@ -85,8 +77,6 @@ MainContentComponent::MainContentComponent()
     lbl_preSilence.setFont (Font (Font::getDefaultMonospacedFontName(), 15.00f, Font::plain).withTypefaceStyle ("Regular"));
     lbl_preSilence.setJustificationType (Justification::centredLeft);
     lbl_preSilence.setEditable (false, false, false);
-    lbl_preSilence.setColour (TextEditor::textColourId, Colours::black);
-    lbl_preSilence.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
     lbl_preSilence.attachToComponent(&sl_preSilence, true);
     
     addAndMakeVisible (sl_postSilence);
@@ -102,8 +92,6 @@ MainContentComponent::MainContentComponent()
     lbl_postSilence.setFont (Font (Font::getDefaultMonospacedFontName(), 15.00f, Font::plain).withTypefaceStyle ("Regular"));
     lbl_postSilence.setJustificationType (Justification::centredLeft);
     lbl_postSilence.setEditable (false, false, false);
-    lbl_postSilence.setColour (TextEditor::textColourId, Colours::black);
-    lbl_postSilence.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
     lbl_postSilence.attachToComponent(&sl_postSilence, true);
     
     addAndMakeVisible (sl_duration);
@@ -119,8 +107,7 @@ MainContentComponent::MainContentComponent()
     lbl_duration.setFont (Font (Font::getDefaultMonospacedFontName(), 15.00f, Font::plain).withTypefaceStyle ("Regular"));
     lbl_duration.setJustificationType (Justification::centredLeft);
     lbl_duration.setEditable (false, false, false);
-    lbl_duration.setColour (TextEditor::textColourId, Colours::black);
-    lbl_duration.setColour (TextEditor::backgroundColourId, Colour (0x00000000));
+
     lbl_duration.attachToComponent(&sl_duration, true);
     
     addAndMakeVisible (btn_measure);
@@ -403,7 +390,7 @@ void MainContentComponent::showAudioSettings()
     o.content.setNonOwned (&audioSettingsComp);
     o.dialogTitle                   = "Audio Settings";
     o.componentToCentreAround       = this;
-    o.dialogBackgroundColour        = Colours::grey;
+    o.dialogBackgroundColour        = getLookAndFeel().findColour (ResizableWindow::backgroundColourId);
     o.escapeKeyTriggersCloseButton  = false;
     o.useNativeTitleBar             = true;
     o.resizable                     = false;
