@@ -1,10 +1,10 @@
 # Impulse Response Measurement
 Impulse response(IR) measurement software.
-This is made with [JUCE](https://github.com/WeAreROLI/JUCE).
+This is made with [JUCE](https://github.com/WeAreROLI/JUCE).  
 
 ## Feature
 - Adjustable frequency range measurements signal
-- Multi-channel support(up to 128 channel)
+- Multi-channel support(up to 128 channel)  
 
 ## System Requirements
 MacOS 10.11 later
