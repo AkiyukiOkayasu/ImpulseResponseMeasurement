@@ -154,7 +154,6 @@ void MainContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& buff
     {
         case measurementState::stopped:
         {
-            bufferToFill.clearActiveBufferRegion();
             break;
         }
         case measurementState::starting:
@@ -165,21 +164,28 @@ void MainContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& buff
         }
         case measurementState::started:
         {
-            auto** recordESSArray = buf_recordedSweptSine.getArrayOfWritePointers();
-            for (int sample = 0; sample < bufferToFill.buffer->getNumSamples(); ++sample)
+            const int bufferSize = bufferToFill.buffer->getNumSamples();
+            const unsigned long ESSLength = buf_recordedSweptSine.getNumSamples();
+            if(recordIndex + bufferSize < ESSLength)
             {
-                if (recordIndex >= buf_recordedSweptSine.getNumSamples())
+                for(int channel = 0; channel < buf_recordedSweptSine.getNumChannels(); ++channel)
                 {
-                    measureState = measurementState::computingIR;
-                    computeIR();
-                    break;
+                    buf_recordedSweptSine.copyFrom(channel, recordIndex, *bufferToFill.buffer, channel, 0, bufferSize);
                 }
-                
-                for(int channel = 0; channel < bufferToFill.buffer->getNumChannels(); ++channel) {
-                    recordESSArray[channel][recordIndex] = bufferToFill.buffer->getSample(channel, sample);
-                }
-                recordIndex++;
             }
+            else
+            {
+                const int remains = ESSLength - recordIndex;
+                for(int channel = 0; channel < buf_recordedSweptSine.getNumChannels(); ++channel)
+                {
+                    buf_recordedSweptSine.copyFrom(channel, recordIndex, *bufferToFill.buffer, channel, 0, remains);
+                }
+                measureState = measurementState::computingIR;
+                std::thread th(&MainContentComponent::computeIR, this);
+                th.detach();
+            }
+            
+            recordIndex += bufferSize;
             break;
         }
         case measurementState::computingIR:
