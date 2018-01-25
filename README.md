@@ -1,29 +1,17 @@
-# Impulse Response Measurement  
-**WORK IN PROGRESS**  
-This software is work in progress. Please use it at your own risk.  
-<br>
-Stand-alone application for Measurements impulse response(IR).  
-This is made with [JUCE](https://github.com/WeAreROLI/JUCE)
-<br>
-
+# Impulse Response Measurement
+Impulse response(IR) measurement software.
+This is made with [JUCE](https://github.com/WeAreROLI/JUCE).
 
 ## Feature
-- Adjustable frequency range measurements signal  
-- Multi-channel support(up to 128 channel)  
-<br>
+- Adjustable frequency range measurements signal
+- Multi-channel support(up to 128 channel)
 
-
-## System Requirements  
-MacOS 10.11 later  
-However, you can export project to other environments from source code.  
-<br>
-
+## System Requirements
+MacOS 10.11 later
+However, it is also possible to export application for other environments from source code.  
 
 ## Download
-You can download the pre-built application from [Release](https://github.com/AkiyukiOkayasu/ImpulseResponseMeasurement/releases).
-<br>
-
+Pre-built application is [here](https://github.com/AkiyukiOkayasu/ImpulseResponseMeasurement/releases).  
 
 ## License
 GPLv3  
-<br>
