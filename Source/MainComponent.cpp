@@ -97,7 +97,7 @@ MainContentComponent::MainContentComponent()
     sl_postSilence.setValue(postSilence, dontSendNotification);
     sl_postSilence.addListener (this);
     addAndMakeVisible (lbl_postSilence);
-    lbl_postSilence.setText("Minimum post Silence", dontSendNotification);
+    lbl_postSilence.setText("Post Silence", dontSendNotification);
     lbl_postSilence.setFont (Font (Font::getDefaultMonospacedFontName(), 15.00f, Font::plain).withTypefaceStyle ("Regular"));
     lbl_postSilence.setJustificationType (Justification::centredLeft);
     lbl_postSilence.setEditable (false, false, false);
