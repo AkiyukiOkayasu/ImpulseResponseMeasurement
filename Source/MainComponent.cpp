@@ -15,8 +15,8 @@ MainContentComponent::MainContentComponent()
     appProperties = new ApplicationProperties();
     appProperties->setStorageParameters (options);
     auto userSettings = appProperties->getUserSettings();
-    ScopedPointer<XmlElement> savedAudioState (userSettings->getXmlValue ("audioDeviceState"));//オーディオインターフェースの設定
-    ScopedPointer<XmlElement> savedParameter (userSettings->getXmlValue("parameterSettings"));//パラメータの設定
+	savedAudioState = std::unique_ptr<XmlElement>(userSettings->getXmlValue ("audioDeviceState"));//オーディオインターフェースの設定
+	savedParameter = std::unique_ptr<XmlElement>(userSettings->getXmlValue("parameterSettings"));//パラメータの設定
     const double minFreq = savedParameter->hasAttribute("minFreqRange") ? savedParameter->getDoubleAttribute("minFreqRange") : 20.0;
     const double maxFreq = savedParameter->hasAttribute("maxFreqRange") ? savedParameter->getDoubleAttribute("maxFreqRange") : 20000.0;
     const double duration = savedParameter->hasAttribute("duration") ? savedParameter->getDoubleAttribute("duration") : 5.0;

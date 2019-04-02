@@ -3,8 +3,7 @@
 <JUCERPROJECT id="vNoCfh" name="ImpulseResponseMeasurement" displaySplashScreen="0"
               reportAppUsage="0" splashScreenColour="Dark" projectType="guiapp"
               version="0.4.0" bundleIdentifier="com.AkiyukiOkayasu.ImpulseResponseMeasurement"
-              includeBinaryInAppConfig="1" cppLanguageStandard="14" companyCopyright=""
-              jucerVersion="5.2.0">
+              includeBinaryInAppConfig="1" companyCopyright="" jucerVersion="5.4.3">
   <MAINGROUP id="tCWCka" name="ImpulseResponseMeasurement">
     <GROUP id="{18B3160F-CB41-CEEF-313D-1DBFA020D418}" name="Source">
       <FILE id="RKQkWK" name="MainComponent.cpp" compile="1" resource="0"
@@ -14,12 +13,10 @@
     </GROUP>
   </MAINGROUP>
   <EXPORTFORMATS>
-    <XCODE_MAC targetFolder="Builds/MacOSX" vst3Folder="">
+    <XCODE_MAC targetFolder="Builds/MacOSX">
       <CONFIGURATIONS>
-        <CONFIGURATION name="Debug" enablePluginBinaryCopyStep="1" isDebug="1" optimisation="1"
-                       linkTimeOptimisation="0" targetName="ImpulseResponseMeasurement"/>
-        <CONFIGURATION name="Release" enablePluginBinaryCopyStep="1" isDebug="0" optimisation="3"
-                       linkTimeOptimisation="1" targetName="ImpulseResponseMeasurement"/>
+        <CONFIGURATION isDebug="1" name="Debug"/>
+        <CONFIGURATION isDebug="0" name="Release"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_video" path="../../juce"/>
@@ -58,4 +55,7 @@
     <MODULE id="juce_video" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
   </MODULES>
   <JUCEOPTIONS/>
+  <LIVE_SETTINGS>
+    <OSX/>
+  </LIVE_SETTINGS>
 </JUCERPROJECT>
