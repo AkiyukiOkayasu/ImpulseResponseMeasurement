@@ -2,7 +2,7 @@
 
 <JUCERPROJECT id="vNoCfh" name="ImpulseResponseMeasurement" displaySplashScreen="1"
               reportAppUsage="0" splashScreenColour="Dark" projectType="guiapp"
-              version="0.4.0" bundleIdentifier="com.AkiyukiOkayasu.ImpulseResponseMeasurement"
+              version="0.5.0" bundleIdentifier="com.AkiyukiOkayasu.ImpulseResponseMeasurement"
               includeBinaryInAppConfig="1" companyCopyright="" jucerFormatVersion="1"
               cppLanguageStandard="20">
   <MAINGROUP id="tCWCka" name="ImpulseResponseMeasurement">
