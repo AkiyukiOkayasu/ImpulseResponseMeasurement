@@ -7,32 +7,10 @@ MainContentComponent::MainContentComponent()
     formatManager.registerBasicFormats();
     setSize (400, 255);
 
-    //保存したパラメータをXMLファイルから呼び出し
-    PropertiesFile::Options options;
-    options.applicationName = ProjectInfo::projectName;
-    options.filenameSuffix = "settings";
-    options.osxLibrarySubFolder = "Preferences";
-    appProperties = new ApplicationProperties();
-    appProperties->setStorageParameters (options);
-    auto userSettings = appProperties->getUserSettings();
-    if (userSettings->containsKey ("audioDeviceState"))
-        savedAudioState = std::unique_ptr<XmlElement> (userSettings->getXmlValue ("audioDeviceState")); //オーディオインターフェースの設定
-
-    if (userSettings->containsKey ("parameterSettings"))
-        savedParameter = std::unique_ptr<XmlElement> (userSettings->getXmlValue ("parameterSettings")); //パラメータの設定
-
-    const double minFreq = savedParameter->hasAttribute ("minFreqRange") ? savedParameter->getDoubleAttribute ("minFreqRange") : 20.0;
-    const double maxFreq = savedParameter->hasAttribute ("maxFreqRange") ? savedParameter->getDoubleAttribute ("maxFreqRange") : 20000.0;
-    const double duration = savedParameter->hasAttribute ("duration") ? savedParameter->getDoubleAttribute ("duration") : 5.0;
-    const double preSilence = savedParameter->hasAttribute ("preSilence") ? savedParameter->getDoubleAttribute ("preSilence") : 2.0;
-    const double postSilence = savedParameter->hasAttribute ("postSilence") ? savedParameter->getDoubleAttribute ("postSilence") : 3.0;
-    const double sampleRate = savedAudioState->hasAttribute ("audioDeviceRate") ? savedAudioState->getDoubleAttribute ("audioDeviceRate") : 20000.0;
-    const int nyquistRate = sampleRate / 2.0;
-
     addAndMakeVisible (sl_freqRange.range);
     sl_freqRange.range.setSliderStyle (Slider::TwoValueHorizontal);
     sl_freqRange.range.setTextBoxStyle (Slider::NoTextBox, true, 80, 20);
-    sl_freqRange.range.setRange (1, nyquistRate, 1);
+    sl_freqRange.range.setRange (1, 192000, 1);
     sl_freqRange.range.setSkewFactorFromMidPoint (2500.0);
     sl_freqRange.range.addListener (this);
     addAndMakeVisible (sl_freqRange.minNumberBox);
@@ -40,21 +18,21 @@ MainContentComponent::MainContentComponent()
     sl_freqRange.minNumberBox.setTextBoxStyle (Slider::TextBoxLeft, false, 80, 20);
     sl_freqRange.minNumberBox.setTextValueSuffix ("Hz");
     sl_freqRange.minNumberBox.setVelocityBasedMode (true);
-    sl_freqRange.minNumberBox.setRange (1, nyquistRate, 1);
+    sl_freqRange.minNumberBox.setRange (1, 192000, 1);
     sl_freqRange.minNumberBox.addListener (this);
     addAndMakeVisible (sl_freqRange.maxNumberBox);
     sl_freqRange.maxNumberBox.setSliderStyle (Slider::LinearBarVertical);
     sl_freqRange.maxNumberBox.setTextBoxStyle (Slider::TextBoxLeft, false, 80, 20);
     sl_freqRange.maxNumberBox.setTextValueSuffix ("Hz");
     sl_freqRange.maxNumberBox.setVelocityBasedMode (true);
-    sl_freqRange.maxNumberBox.setRange (1, nyquistRate, 1);
+    sl_freqRange.maxNumberBox.setRange (1, 192000, 1);
     sl_freqRange.maxNumberBox.addListener (this);
     sl_freqRange.minNumberBox.getValueObject().referTo (sl_freqRange.minSharedValue);
     sl_freqRange.maxNumberBox.getValueObject().referTo (sl_freqRange.maxSharedValue);
     sl_freqRange.range.getMinValueObject().referTo (sl_freqRange.minSharedValue);
     sl_freqRange.range.getMaxValueObject().referTo (sl_freqRange.maxSharedValue);
-    sl_freqRange.minNumberBox.setValue (minFreq, dontSendNotification);
-    sl_freqRange.maxNumberBox.setValue (maxFreq, dontSendNotification);
+    sl_freqRange.minNumberBox.setValue (1, dontSendNotification);
+    sl_freqRange.maxNumberBox.setValue (192000, dontSendNotification);
 
     addAndMakeVisible (lbl_appName);
     lbl_appName.setText ("IR measure", dontSendNotification);
@@ -74,7 +52,7 @@ MainContentComponent::MainContentComponent()
     sl_preSilence.setVelocityBasedMode (true);
     sl_preSilence.setTextValueSuffix ("s");
     sl_preSilence.setTextBoxStyle (Slider::TextBoxLeft, false, 60, 20);
-    sl_preSilence.setValue (preSilence, dontSendNotification);
+    sl_preSilence.setValue (2, dontSendNotification);
     sl_preSilence.addListener (this);
     addAndMakeVisible (lbl_preSilence);
     lbl_preSilence.setText ("Pre Silence", dontSendNotification);
@@ -89,7 +67,7 @@ MainContentComponent::MainContentComponent()
     sl_postSilence.setVelocityBasedMode (true);
     sl_postSilence.setTextValueSuffix ("s");
     sl_postSilence.setTextBoxStyle (Slider::TextBoxLeft, false, 60, 20);
-    sl_postSilence.setValue (postSilence, dontSendNotification);
+    sl_postSilence.setValue (2, dontSendNotification);
     sl_postSilence.addListener (this);
     addAndMakeVisible (lbl_postSilence);
     lbl_postSilence.setText ("Post Silence", dontSendNotification);
@@ -104,7 +82,7 @@ MainContentComponent::MainContentComponent()
     sl_duration.setVelocityBasedMode (true);
     sl_duration.setTextValueSuffix ("s");
     sl_duration.setTextBoxStyle (Slider::TextBoxLeft, false, 60, 20);
-    sl_duration.setValue (duration, dontSendNotification);
+    sl_duration.setValue (5, dontSendNotification);
     sl_duration.addListener (this);
     addAndMakeVisible (lbl_duration);
     lbl_duration.setText ("Duration", dontSendNotification);
@@ -222,17 +200,6 @@ void MainContentComponent::sliderValueChanged (Slider* slider)
     else if (slider == &sl_preSilence)
     {
     }
-
-    //スライダーの値をXMLで保存
-    String xmltag = "parameter";
-    ScopedPointer<XmlElement> parameterSettings = new XmlElement (xmltag);
-    parameterSettings->setAttribute ("minFreqRange", sl_freqRange.minNumberBox.getValue());
-    parameterSettings->setAttribute ("maxFreqRange", sl_freqRange.maxNumberBox.getValue());
-    parameterSettings->setAttribute ("preSilence", sl_preSilence.getValue());
-    parameterSettings->setAttribute ("postSilence", sl_postSilence.getValue());
-    parameterSettings->setAttribute ("duration", sl_duration.getValue());
-    appProperties->getUserSettings()->setValue ("parameterSettings", parameterSettings);
-    appProperties->getUserSettings()->saveIfNeeded();
 }
 
 void MainContentComponent::buttonClicked (Button* button)
@@ -444,11 +411,6 @@ void MainContentComponent::showAudioSettings()
     o.useNativeTitleBar = true;
     o.resizable = false;
     o.runModal();
-
-    //設定をXMLファイルで保存
-    std::unique_ptr<XmlElement> audioState (deviceManager.createStateXml());
-    appProperties->getUserSettings()->setValue ("audioDeviceState", audioState.get());
-    appProperties->getUserSettings()->saveIfNeeded();
 }
 
 std::string MainContentComponent::getTimeStamp()
