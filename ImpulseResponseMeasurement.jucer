@@ -4,7 +4,7 @@
               reportAppUsage="0" splashScreenColour="Dark" projectType="guiapp"
               version="0.4.0" bundleIdentifier="com.AkiyukiOkayasu.ImpulseResponseMeasurement"
               includeBinaryInAppConfig="1" companyCopyright="" jucerFormatVersion="1"
-              cppLanguageStandard="17">
+              cppLanguageStandard="20">
   <MAINGROUP id="tCWCka" name="ImpulseResponseMeasurement">
     <GROUP id="{18B3160F-CB41-CEEF-313D-1DBFA020D418}" name="Source">
       <FILE id="RKQkWK" name="MainComponent.cpp" compile="1" resource="0"
