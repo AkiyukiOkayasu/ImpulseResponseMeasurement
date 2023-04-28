@@ -312,7 +312,7 @@ void MainContentComponent::generateSweptSine (const double freqBegin, const doub
         buf_inverseFilter.clear();
         buf_inverseFilter.setSize (1, totalLengthInSamples);
 
-        const double alpha = (2.0 * double_Pi * freqBegin * sweptSineDuration) / log (freqEnd / freqBegin);
+        const double alpha = (2.0 * std::numbers::pi * freqBegin * sweptSineDuration) / log (freqEnd / freqBegin);
         const double invFilterGainCoefficient = (-6.0 * log2 (freqEnd / freqBegin));
         auto* ESSArray = buf_sweptSine.getWritePointer (0);
         auto* inverseFilterArray = buf_inverseFilter.getWritePointer (0);
@@ -321,7 +321,7 @@ void MainContentComponent::generateSweptSine (const double freqBegin, const doub
             //ESS生成
             double tESS = (double) i / sampleRate;
             double vESS = alpha * (exp ((tESS / sweptSineDuration) * log (freqEnd / freqBegin)) - 1.0);
-            vESS = fmod (vESS, 2.0 * double_Pi);
+            vESS = fmod (vESS, 2.0 * std::numbers::pi);
             vESS = sin (vESS);
             ESSArray[i] = vESS;
 
@@ -329,7 +329,7 @@ void MainContentComponent::generateSweptSine (const double freqBegin, const doub
             double gainInvFilter = Decibels::decibelsToGain (invFilterGainCoefficient * (i / (double) sweptSineLengthInSamples));
             double tInvFilter = (double) (sweptSineLengthInSamples - (i + 1)) / sampleRate;
             double vInvFilter = alpha * (exp ((tInvFilter / sweptSineDuration) * log (freqEnd / freqBegin)) - 1.0);
-            vInvFilter = fmod (vInvFilter, 2.0 * double_Pi);
+            vInvFilter = fmod (vInvFilter, 2.0 * std::numbers::pi);
             vInvFilter = sin (vInvFilter) * gainInvFilter;
             inverseFilterArray[i] = vInvFilter;
         }
@@ -339,7 +339,7 @@ void MainContentComponent::generateSweptSine (const double freqBegin, const doub
             //ESS終端でのクリックノイズ除去のために終端最近傍のゼロ位相点でトリミング
             double t = (double) i / sampleRate;
             double v = alpha * (exp ((t / sweptSineDuration) * log (freqEnd / freqBegin)) - 1.0);
-            v = fmod (v, 2.0 * double_Pi);
+            v = fmod (v, 2.0 * std::numbers::pi);
             if (v <= 0.001) break;
             ESSArray[i] = 0.0;
         }
