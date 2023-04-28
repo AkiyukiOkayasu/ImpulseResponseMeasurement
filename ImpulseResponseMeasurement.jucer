@@ -16,8 +16,8 @@
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX" microphonePermissionNeeded="1">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" osxCompatibility="10.15 SDK"/>
-        <CONFIGURATION isDebug="0" name="Release" osxCompatibility="10.15 SDK"/>
+        <CONFIGURATION isDebug="1" name="Debug" osxCompatibility="10.15 SDK" macOSDeploymentTarget="10.15"/>
+        <CONFIGURATION isDebug="0" name="Release" osxCompatibility="10.15 SDK" macOSDeploymentTarget="10.15"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_video" path="../../juce"/>
