@@ -410,7 +410,7 @@ void MainContentComponent::showAudioSettings()
     o.escapeKeyTriggersCloseButton = false;
     o.useNativeTitleBar = true;
     o.resizable = false;
-    o.runModal();
+    o.launchAsync();
 }
 
 std::string MainContentComponent::getTimeStamp()
