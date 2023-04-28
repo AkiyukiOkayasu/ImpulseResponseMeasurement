@@ -338,9 +338,9 @@ void MainContentComponent::computeIR()
     dsp::FFT fft (FFTOrder);
     buf_IR.clear();
     buf_IR.setSize (numChannels, buf_recordedSweptSine.getNumSamples());
-    auto** recordESSArray = buf_recordedSweptSine.getArrayOfWritePointers();
+    auto recordESSArray = buf_recordedSweptSine.getArrayOfWritePointers();
     auto* inverseFilterArray = buf_inverseFilter.getWritePointer (0);
-    auto** IRArray = buf_IR.getArrayOfWritePointers();
+    auto IRArray = buf_IR.getArrayOfWritePointers();
 
     for (int channel = 0; channel < numChannels; ++channel)
     {
